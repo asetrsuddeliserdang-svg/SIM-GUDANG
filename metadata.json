@@ -1,0 +1,6 @@
+{
+  "name": "SIMPERGUD RSUD (Sistem Persediaan Gudang)",
+  "description": "Aplikasi profesional untuk manajemen persedian barang medis dan umum RSUD, mendukung multi-item entry, approval workflow, dan kartu stok otomatis.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": []
+}

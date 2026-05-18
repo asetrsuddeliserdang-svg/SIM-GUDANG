@@ -1,0 +1,120 @@
+{
+  "entities": {
+    "Satuan": {
+      "title": "Satuan Barang",
+      "description": "Master data satuan barang",
+      "type": "object",
+      "properties": {
+        "kode": { "type": "string" },
+        "nama_satuan": { "type": "string" },
+        "alias_input": { "type": "string" },
+        "keterangan": { "type": "string" },
+        "status": { "type": "string", "enum": ["AKTIF", "NON-AKTIF"] }
+      },
+      "required": ["kode", "nama_satuan", "status"]
+    },
+    "Supplier": {
+      "title": "Supplier",
+      "description": "Master data supplier / pemasok",
+      "type": "object",
+      "properties": {
+        "id_supplier": { "type": "string" },
+        "nama_supplier": { "type": "string" },
+        "kontak": { "type": "string" },
+        "alamat": { "type": "string" },
+        "status": { "type": "string", "enum": ["AKTIF", "NON-AKTIF"] }
+      },
+      "required": ["id_supplier", "nama_supplier", "status"]
+    },
+    "MasterBarang": {
+      "title": "Master Barang",
+      "description": "Master data barang gudang",
+      "type": "object",
+      "properties": {
+        "kode_barang": { "type": "string" },
+        "nama_barang": { "type": "string" },
+        "kategori": { "type": "string", "enum": ["BMHP", "BHP", "ASET"] },
+        "sub_kategori": { "type": "string" },
+        "satuan": { "type": "string" },
+        "stok_minimum": { "type": "number" },
+        "stok_sekarang": { "type": "number" },
+        "merk": { "type": "string" },
+        "lokasi_rak": { "type": "string" },
+        "status": { "type": "string", "enum": ["AKTIF", "NON-AKTIF"] }
+      },
+      "required": ["kode_barang", "nama_barang", "kategori", "satuan", "status"]
+    },
+    "TrxBarangMasukHeader": {
+      "title": "Header Barang Masuk",
+      "description": "Header transaksi barang masuk",
+      "type": "object",
+      "properties": {
+        "id_transaksi": { "type": "string" },
+        "tanggal": { "type": "string", "format": "date-time" },
+        "no_faktur": { "type": "string" },
+        "supplier_id": { "type": "string" },
+        "supplier_nama": { "type": "string" },
+        "keterangan": { "type": "string" },
+        "file_faktur_url": { "type": "string" },
+        "total_qty": { "type": "number" },
+        "grand_total": { "type": "number" },
+        "user_input": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["PENDING", "APPROVED", "REJECTED"] }
+      },
+      "required": ["id_transaksi", "tanggal", "no_faktur", "supplier_id", "grand_total"]
+    },
+    "TrxBarangMasukDetail": {
+      "title": "Detail Barang Masuk",
+      "description": "Item transaksi barang masuk",
+      "type": "object",
+      "properties": {
+        "id_transaksi": { "type": "string" },
+        "kode_barang": { "type": "string" },
+        "nama_barang": { "type": "string" },
+        "satuan": { "type": "string" },
+        "qty": { "type": "number" },
+        "harga": { "type": "number" },
+        "total": { "type": "number" }
+      },
+      "required": ["id_transaksi", "kode_barang", "qty", "harga"]
+    },
+    "TrxMutasiStok": {
+      "title": "Mutasi Stok",
+      "description": "Histori mutasi stok barang",
+      "type": "object",
+      "properties": {
+        "tanggal": { "type": "string", "format": "date-time" },
+        "kode_barang": { "type": "string" },
+        "nama_barang": { "type": "string" },
+        "jenis": { "type": "string", "enum": ["MASUK", "KELUAR", "MUTASI", "ADJUSTMENT"] },
+        "masuk": { "type": "number" },
+        "keluar": { "type": "number" },
+        "saldo": { "type": "number" },
+        "referensi": { "type": "string" }
+      },
+      "required": ["tanggal", "kode_barang", "jenis", "saldo"]
+    },
+    "User": {
+      "title": "User Profile",
+      "description": "Data user dan role",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["ADMIN", "GUDANG", "UNIT", "DIREKTUR"] },
+        "status": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "satuan": { "schema": "Satuan", "description": "Koleksi master data satuan" },
+    "supplier": { "schema": "Supplier", "description": "Koleksi master data supplier" },
+    "barang": { "schema": "MasterBarang", "description": "Koleksi master data barang" },
+    "trx_barang_masuk": { "schema": "TrxBarangMasukHeader", "description": "Header transaksi barang masuk" },
+    "trx_barang_masuk/{trxId}/items": { "schema": "TrxBarangMasukDetail", "description": "Detail item barang masuk" },
+    "mutasi": { "schema": "TrxMutasiStok", "description": "Histori mutasi stok" },
+    "users": { "schema": "User", "description": "Data user profil" }
+  }
+}

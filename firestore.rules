@@ -1,0 +1,105 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ------------------------------------------------------------
+    // GLOBAL HELPERS
+    // ------------------------------------------------------------
+    function isSignedIn() { return request.auth != null; }
+    function isVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function hasRole(role) {
+      return isSignedIn() && getUserData().role == role;
+    }
+    
+    function isAdmin() { return hasRole('ADMIN'); }
+    function isGudang() { return hasRole('GUDANG'); }
+    function isDirektur() { return hasRole('DIREKTUR'); }
+
+    // Deny all by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ------------------------------------------------------------
+    // USERS COLLECTION
+    // ------------------------------------------------------------
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && request.auth.uid == userId && (
+        incoming().keys().hasAll(['uid', 'email', 'role', 'status']) &&
+        incoming().role == 'UNIT' // Default role for new users
+      );
+      allow update: if isAdmin();
+    }
+
+    // ------------------------------------------------------------
+    // MASTER DATA (Satuan, Supplier, Barang)
+    // ------------------------------------------------------------
+    function isValidMaster(data) {
+      return data.status in ['AKTIF', 'NON-AKTIF'];
+    }
+
+    match /satuan/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || isGudang();
+    }
+
+    match /supplier/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() || isGudang();
+    }
+
+    match /barang/{id} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() || isGudang();
+      allow update: if isAdmin() || isGudang() || (
+        // Allow stock update during transaction processing
+        incoming().diff(existing()).affectedKeys().hasOnly(['stok_sekarang'])
+      );
+    }
+
+    // ------------------------------------------------------------
+    // TRANSAKSI BARANG MASUK
+    // ------------------------------------------------------------
+    function isValidTrxHeader(data) {
+      return data.id_transaksi is string &&
+             data.grand_total is number && data.grand_total >= 0 &&
+             data.status in ['PENDING', 'APPROVED', 'REJECTED'];
+    }
+
+    match /trx_barang_masuk/{trxId} {
+      allow read: if isSignedIn();
+      allow create: if (isAdmin() || isGudang()) && isValidTrxHeader(incoming()) && 
+                    incoming().status == 'PENDING' && incoming().user_input == request.auth.uid;
+      allow update: if (isAdmin() || isGudang() || isDirektur()) && (
+        // Approval action
+        (incoming().diff(existing()).affectedKeys().hasOnly(['status']) && (isDirektur() || isAdmin())) ||
+        // Admin fix
+        isAdmin()
+      );
+    }
+
+    match /trx_barang_masuk/{trxId}/items/{itemId} {
+      allow read: if isSignedIn();
+      allow create: if (isAdmin() || isGudang()) && exists(/databases/$(database)/documents/trx_barang_masuk/$(trxId));
+      allow delete, update: if isAdmin();
+    }
+
+    // ------------------------------------------------------------
+    // MUTASI STOK
+    // ------------------------------------------------------------
+    match /mutasi/{id} {
+      allow read: if isSignedIn();
+      allow create: if (isAdmin() || isGudang()) && incoming().keys().hasAll(['tanggal', 'kode_barang', 'jenis', 'saldo']);
+      allow update, delete: if false; // Mutasi is immutable
+    }
+  }
+}
