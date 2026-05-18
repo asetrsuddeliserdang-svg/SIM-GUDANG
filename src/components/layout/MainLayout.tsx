@@ -307,8 +307,8 @@ export default function MainLayout() {
         </header>
 
         {/* Scrollable Area */}
-        <div className="flex-1 overflow-auto bg-[#f8fafc] p-3 sm:p-5 md:p-6 lg:p-8 custom-scrollbar">
-          <div className="w-full max-w-[1600px] mx-auto">
+        <div className="flex-1 overflow-auto bg-[#f8fafc] p-3 sm:p-5 md:p-6 lg:p-8 xl:p-10 2xl:p-12 3xl:p-16 4xl:p-20 custom-scrollbar">
+          <div className="w-full max-w-full mx-auto">
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}

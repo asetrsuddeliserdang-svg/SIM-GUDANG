@@ -217,7 +217,7 @@ export default function Dashboard() {
         </Card>
       )}
       
-      <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:gap-6 lg:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-4">
         {cards.map((card, i) => (
           <motion.div key={i} variants={itemVariants}>
             <Card className={cn(
@@ -247,8 +247,8 @@ export default function Dashboard() {
       ))}
       </div>
 
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-7">
-        <motion.div variants={itemVariants} className="lg:col-span-4 translate-z-0 w-full min-w-0">
+      <div className="grid gap-6 lg:gap-8 grid-cols-1 lg:grid-cols-7 2xl:grid-cols-10 3xl:grid-cols-12">
+        <motion.div variants={itemVariants} className="lg:col-span-4 2xl:col-span-6 3xl:col-span-8 translate-z-0 w-full min-w-0">
           <Card className={cn(
             "border border-slate-200 shadow-sm overflow-hidden relative rounded-2xl h-full",
             loading && "opacity-50"
@@ -262,7 +262,7 @@ export default function Dashboard() {
               <CardTitle className="text-xs md:text-sm font-black uppercase tracking-widest text-slate-700">Volume Penerimaan Barang</CardTitle>
               <CardDescription className="text-[10px] md:text-xs font-medium">Visualisasi aktivitas logistik mingguan</CardDescription>
             </CardHeader>
-            <CardContent className="h-[250px] md:h-[320px] p-2 md:p-6 pt-6">
+            <CardContent className="h-[250px] md:h-[320px] 2xl:h-[450px] 3xl:h-[600px] p-2 md:p-6 pt-6">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={stats.dailyActivity} margin={{ top: 0, right: 10, left: -20, bottom: 0 }}>
                 <defs>
@@ -285,7 +285,7 @@ export default function Dashboard() {
         </Card>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="lg:col-span-3 h-full">
+        <motion.div variants={itemVariants} className="lg:col-span-3 2xl:col-span-4 3xl:col-span-4 h-full">
           <Card className={cn(
             "h-full border border-slate-200 shadow-sm overflow-hidden relative rounded-2xl",
             loading && "opacity-50"

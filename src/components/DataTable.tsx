@@ -183,7 +183,7 @@ export function DataTable<T>({
       )}
 
       <div className="rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/20 overflow-hidden relative group/table">
-        <div className="overflow-x-auto overflow-y-auto max-h-[600px] scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+        <div className="overflow-x-auto overflow-y-auto max-h-[600px] 2xl:max-h-[850px] 3xl:max-h-[1200px] scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
           <table className="w-full border-separate border-spacing-0 text-sm">
             <TableHeader className="sticky top-0 z-40 bg-slate-50/95 backdrop-blur-md shadow-sm">
               <TableRow className="hover:bg-transparent border-b border-slate-100">
