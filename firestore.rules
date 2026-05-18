@@ -18,9 +18,9 @@ service cloud.firestore {
       return isSignedIn() && getUserData().role == role;
     }
     
-    function isAdmin() { return hasRole('ADMIN'); }
-    function isGudang() { return hasRole('GUDANG'); }
-    function isDirektur() { return hasRole('DIREKTUR'); }
+    function isAdmin() { return isSignedIn() && getUserData().role == 'ADMIN'; }
+    function isGudang() { return isSignedIn() && (getUserData().role == 'GUDANG' || getUserData().role == 'ADMIN'); }
+    function isDirektur() { return isSignedIn() && (getUserData().role == 'DIREKTUR' || getUserData().role == 'ADMIN'); }
 
     // Deny all by default
     match /{document=**} {
@@ -34,8 +34,11 @@ service cloud.firestore {
       allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       allow list: if isAdmin();
       allow create: if isSignedIn() && request.auth.uid == userId && (
-        incoming().keys().hasAll(['uid', 'email', 'role', 'status']) &&
-        incoming().role == 'UNIT' // Default role for new users
+        incoming().keys().hasAll(['uid', 'email', 'role', 'status', 'displayName']) &&
+        (
+          incoming().role == 'UNIT' || 
+          (incoming().role == 'ADMIN' && incoming().email == 'aset.rsuddeliserdang@gmail.com')
+        )
       );
       allow update: if isAdmin();
     }

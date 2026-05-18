@@ -276,6 +276,10 @@ class GASService {
   async seedDatabase() {
     return this.request('POST', { action: 'seedData' });
   }
+
+  async login(payload: { email: string, password: string }) {
+    return this.request('POST', { action: 'login', payload });
+  }
 }
 
 export const gasService = new GASService();

@@ -44,13 +44,14 @@ import {
 import { Badge } from '../components/ui/badge';
 import { cn } from '../lib/utils';
 import { toast } from 'sonner';
-import { auth } from '../lib/firebase';
+import { useAuth } from '../context/AuthContext';
 import { MasterBarang } from '../types';
 import { useNotifications } from '../context/NotificationContext';
 
 import { DataTable, Column } from '../components/DataTable';
 
 export default function RequestManagement() {
+  const { user } = useAuth();
   const { checkNewRequests } = useNotifications();
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState<any[]>([]);
@@ -300,7 +301,7 @@ export default function RequestManagement() {
           catatan_review: item.catatan_review,
           is_new: item.is_new || false
         })),
-        user_reviewer: auth.currentUser?.email || 'Admin'
+        user_reviewer: user?.email || 'Admin'
       });
       toast.success("Review disimpan", { id: toastId });
     } catch (err) {
@@ -326,7 +327,7 @@ export default function RequestManagement() {
     try {
       await gasService.approvePermintaan({
         id_permintaan: selectedReq.id_permintaan,
-        user_approver: auth.currentUser?.email || 'Admin',
+        user_approver: user?.email || 'Admin',
         item_updates: reviewedItems.map(item => ({
           kode_barang: item.kode_barang,
           nama_barang: item.nama_barang,

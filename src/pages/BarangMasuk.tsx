@@ -40,7 +40,7 @@ import { id } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
 import { cn } from '../lib/utils';
-import { auth } from '../lib/firebase';
+import { useAuth } from '../context/AuthContext';
 import { 
   Dialog, 
   DialogContent, 
@@ -70,6 +70,7 @@ interface FormItem {
 }
 
 export default function BarangMasuk() {
+  const { user } = useAuth();
   const { barangList, supplierList, loading: masterLoading } = useMasterData();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('entry');
@@ -372,7 +373,7 @@ export default function BarangMasuk() {
         file_faktur_url: finalFileUrl,
         items: items,
         grand_total: grandTotal,
-        user_input: auth.currentUser?.email || 'Anonymous'
+        user_input: user?.email || 'Anonymous'
       };
 
       if (editingTrxId) {

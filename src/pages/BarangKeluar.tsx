@@ -37,7 +37,7 @@ import { id } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
 import { cn } from '../lib/utils';
-import { auth } from '../lib/firebase';
+import { useAuth } from '../context/AuthContext';
 import { 
   Dialog, 
   DialogContent, 
@@ -65,6 +65,7 @@ interface FormItem {
 }
 
 export default function BarangKeluar() {
+  const { user } = useAuth();
   const { barangList, unitList, loading: masterLoading } = useMasterData();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('entry');
@@ -408,7 +409,7 @@ export default function BarangKeluar() {
         unit_nama: unitDoc?.nama_unit || header.unit_nama || 'Unknown',
         keterangan: header.keterangan,
         items: items,
-        user_input: auth.currentUser?.email || 'Anonymous'
+        user_input: user?.email || 'Anonymous'
       };
 
       if (isEditing) {

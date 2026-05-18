@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from './lib/firebase';
 import Auth from './pages/Auth';
 import MainLayout from './components/layout/MainLayout';
 import Dashboard from './pages/Dashboard';
@@ -19,20 +17,12 @@ import RequestManagement from './pages/RequestManagement';
 import { Toaster } from './components/ui/sonner';
 import { MasterDataProvider } from './context/MasterDataContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 import { ThemeProvider } from 'next-themes';
 
-export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+function AppContent() {
+  const { user, loading, isAdmin, isGudang } = useAuth();
 
   if (loading) {
     return (
@@ -44,37 +34,55 @@ export default function App() {
   }
 
   return (
-    <BrowserRouter>
-      <MasterDataProvider>
-        <NotificationProvider>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/request" element={<PublicRequest />} />
-            <Route path="/auth" element={user ? <Navigate to="/" replace /> : <Auth />} />
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/request" element={<PublicRequest />} />
+      <Route path="/auth" element={user ? <Navigate to="/" replace /> : <Auth />} />
 
-            {/* Protected Routes */}
-            {user ? (
-              <Route element={<MainLayout />}>
-                <Route index element={<Dashboard />} />
-                <Route path="master" element={<MasterData />} />
-                <Route path="incoming" element={<BarangMasuk />} />
-                <Route path="outgoing" element={<BarangKeluar />} />
-                <Route path="requests" element={<RequestManagement />} />
-                <Route path="opening-balance" element={<SaldoAwal />} />
-                <Route path="mutation" element={<Mutation />} />
-                <Route path="stock-card" element={<StockCard />} />
-                <Route path="reports" element={<ReportStock />} />
-                <Route path="report-usage" element={<ReportUsage />} />
-                <Route path="report-supplier" element={<ReportSupplier />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Route>
-            ) : (
-              <Route path="*" element={<Navigate to="/auth" replace />} />
-            )}
-          </Routes>
-          <Toaster />
-        </NotificationProvider>
-      </MasterDataProvider>
+      {/* Protected Routes */}
+      {user ? (
+        <Route element={<MainLayout />}>
+          <Route index element={<Dashboard />} />
+          
+          {/* Admin & Gudang Only */}
+          {isGudang && (
+            <>
+              <Route path="master" element={isAdmin ? <MasterData /> : <Navigate to="/" replace />} />
+              <Route path="incoming" element={<BarangMasuk />} />
+              <Route path="outgoing" element={<BarangKeluar />} />
+              <Route path="requests" element={<RequestManagement />} />
+              <Route path="opening-balance" element={<SaldoAwal />} />
+              <Route path="mutation" element={<Mutation />} />
+              <Route path="stock-card" element={<StockCard />} />
+              <Route path="reports" element={<ReportStock />} />
+              <Route path="report-usage" element={<ReportUsage />} />
+              <Route path="report-supplier" element={<ReportSupplier />} />
+            </>
+          )}
+
+          {/* Unit & Above (General pages if any) */}
+          {/* <Route path="my-orders" element={<MyOrders />} /> */}
+          
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      ) : (
+        <Route path="*" element={<Navigate to="/auth" replace />} />
+      )}
+    </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <MasterDataProvider>
+          <NotificationProvider>
+            <AppContent />
+            <Toaster />
+          </NotificationProvider>
+        </MasterDataProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

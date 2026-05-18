@@ -21,7 +21,7 @@ import { MasterBarang } from '../types';
 import { useMasterData } from '../context/MasterDataContext';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { auth } from '../lib/firebase';
+import { useAuth } from '../context/AuthContext';
 import { cn } from '../lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { SearchBarang } from '@/components/SearchBarang';
@@ -34,6 +34,7 @@ interface SaldoItem {
 }
 
 export default function SaldoAwal() {
+  const { user } = useAuth();
   const { barangList, loading: masterLoading } = useMasterData();
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<SaldoItem[]>([
@@ -91,7 +92,7 @@ export default function SaldoAwal() {
         tanggal: tanggal,
         keterangan: keterangan,
         items: items.filter(i => i.qty > 0 || i.kode_barang !== ''), // Hanya simpan yang berisi
-        user_input: auth.currentUser?.email || 'Anonymous'
+        user_input: user?.email || 'Anonymous'
       };
 
       if (payload.items.length === 0) {

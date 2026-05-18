@@ -29,18 +29,20 @@ import {
   WifiOff,
   AlertTriangle
 } from 'lucide-react';
-import { auth } from '../../lib/firebase';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 import { cn } from '../../lib/utils';
 import { gasService } from '../../services/gasService';
+import { useAuth } from '../../context/AuthContext';
 
 import { NotificationBell } from './NotificationBell';
 
 export default function MainLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const userName = auth.currentUser?.displayName || "User";
+  const { user, logout, isAdmin, isGudang, isUnit, isDirektur } = useAuth();
+  const userName = user?.name || "User";
+  const userRole = user?.role || "GUEST";
   const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
@@ -71,44 +73,51 @@ export default function MainLayout() {
   };
 
   const handleLogout = async () => {
-    await auth.signOut();
-    navigate('/');
+    logout();
+    navigate('/auth');
   };
 
   const menuSections = [
     {
       title: 'Utama',
       items: [
-        { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+        { name: 'Dashboard', path: '/', icon: LayoutDashboard, visible: true },
       ]
     },
     {
       title: 'Master Data',
+      visible: isAdmin,
       items: [
-        { name: 'Data Barang', path: '/master', icon: Package },
-        { name: 'Supplier', path: '/master?tab=supplier', icon: Truck },
+        { name: 'Data Barang', path: '/master', icon: Package, visible: isAdmin },
+        { name: 'Supplier', path: '/master?tab=supplier', icon: Truck, visible: isAdmin },
       ]
     },
     {
       title: 'Transaksi',
       items: [
-        { name: 'Saldo Awal', path: '/opening-balance', icon: History },
-        { name: 'Barang Masuk', path: '/incoming', icon: Truck },
-        { name: 'Barang Keluar', path: '/outgoing', icon: Home },
-        { name: 'Persetujuan Order', path: '/requests', icon: ClipboardList },
-        { name: 'Mutasi Stok', path: '/mutation', icon: ArrowLeftRight },
-        { name: 'Kartu Stok', path: '/stock-card', icon: FileText },
+        { name: 'Saldo Awal', path: '/opening-balance', icon: History, visible: isGudang },
+        { name: 'Barang Masuk', path: '/incoming', icon: Truck, visible: isGudang },
+        { name: 'Barang Keluar', path: '/outgoing', icon: Home, visible: isGudang },
+        { name: 'Persetujuan Order', path: '/requests', icon: ClipboardList, visible: isGudang || isUnit },
+        { name: 'Mutasi Stok', path: '/mutation', icon: ArrowLeftRight, visible: isGudang },
+        { name: 'Kartu Stok', path: '/stock-card', icon: FileText, visible: isGudang },
       ]
     },
     {
       title: 'Laporan',
+      visible: isGudang || isDirektur,
       items: [
-        { name: 'Stok Persediaan', path: '/reports', icon: BarChart3 },
-        { name: 'Pemakaian Per Unit', path: '/report-usage', icon: Building2 },
-        { name: 'Rekap Supplier', path: '/report-supplier', icon: Truck },
+        { name: 'Stok Persediaan', path: '/reports', icon: BarChart3, visible: isGudang || isDirektur },
+        { name: 'Pemakaian Per Unit', path: '/report-usage', icon: Building2, visible: isGudang || isDirektur },
+        { name: 'Rekap Supplier', path: '/report-supplier', icon: Truck, visible: isGudang || isDirektur },
       ]
     }
   ];
+
+  const filteredMenuSections = menuSections.filter(s => s.visible !== false).map(s => ({
+    ...s,
+    items: s.items.filter(i => i.visible !== false)
+  })).filter(s => s.items.length > 0);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
@@ -151,7 +160,7 @@ export default function MainLayout() {
         </div>
         
         <nav className="flex-1 p-4 space-y-6 overflow-y-auto overflow-x-hidden custom-scrollbar">
-          {menuSections.map((section) => (
+          {filteredMenuSections.map((section) => (
             <div key={section.title} className="space-y-1">
               {!isSidebarCollapsed && (
                 <div className="px-2 pb-2 text-[10px] uppercase font-bold text-slate-500 tracking-widest animate-in fade-in duration-500">
@@ -195,7 +204,15 @@ export default function MainLayout() {
             {!isSidebarCollapsed && (
               <div className="flex-1 overflow-hidden animate-in fade-in duration-500">
                 <p className="text-xs font-semibold text-slate-200 truncate">{userName}</p>
-                <p className="text-[10px] text-emerald-400 font-medium tracking-tight">Online • Shift 1</p>
+                <p className={cn(
+                  "text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border inline-block mt-1",
+                  userRole === 'ADMIN' ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                  userRole === 'GUDANG' ? "bg-sky-500/10 text-sky-500 border-sky-500/20" :
+                  userRole === 'DIREKTUR' ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
+                  "bg-slate-500/10 text-slate-400 border-slate-500/20"
+                )}>
+                  {userRole}
+                </p>
               </div>
             )}
             {!isSidebarCollapsed && (

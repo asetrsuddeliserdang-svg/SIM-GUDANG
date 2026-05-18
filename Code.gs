@@ -6,34 +6,39 @@
 
 // GANTI DENGAN ID SPREADSHEET ANDA
 const SPREADSHEET_ID = '1YqTE8BFYOdkgeJt3Gs25W0GaAA0VfgJuW52gCHvl_c8';
+const AUTH_SPREADSHEET_ID = '120rxSc2m21FYFATObzHtWu2DRhLxC2WjjjdUxXr_voU'; // Spreadsheet Khusus User
 const FAKTUR_FOLDER_ID = '1EAnOCWBhA7PegkKcJP2Lf7nJR2ccFal8';
 const ADMIN_EMAIL = 'aset.rsuddeliserdang@gmail.com'; 
 
+function getSpreadsheet(id) {
+  try {
+    const targetId = id || SPREADSHEET_ID;
+    if (targetId && targetId !== 'MAKSUD_ANDA_ID_DISINI') {
+      return SpreadsheetApp.openById(targetId);
+    }
+  } catch (e) {}
+  
+  try {
+    return SpreadsheetApp.getActiveSpreadsheet();
+  } catch (e) {}
+  
+  throw new Error("ID Spreadsheet tidak ditemukan atau tidak dapat diakses.");
+}
+
 /**
- * FUNGSI TRIGGER STOK (PILIH INI DI MENU TRIGGER)
- * Cek semua stok secara berkala (misal tiap jam atau tiap pagi)
+ * FUNGSI TRIGGER STOK
  */
 function scheduledStockCheck() {
   const ss = getSpreadsheet();
   const masterSheet = ss.getSheetByName('MASTER_BARANG');
   const values = masterSheet.getDataRange().getValues();
-  
   let alertsCount = 0;
-  
   for (let i = 1; i < values.length; i++) {
     const item = {
-      kode_barang: values[i][0],
-      nama_barang: values[i][1],
-      satuan: values[i][4],
-      stok_minimum: values[i][5],
-      monitor_stok: values[i][6],
-      prioritas_alert: values[i][7],
-      kirim_email_alert: values[i][8],
-      lokasi_rak: values[i][10],
-      stok_sekarang: values[i][12]
+      kode_barang: values[i][0], nama_barang: values[i][1], satuan: values[i][4],
+      stok_minimum: values[i][5], monitor_stok: values[i][6], prioritas_alert: values[i][7],
+      kirim_email_alert: values[i][8], lokasi_rak: values[i][10], stok_sekarang: values[i][12]
     };
-    
-    // Cek kondisi alert
     if (item.monitor_stok === 'Ya' && item.prioritas_alert === 'Kritis' && item.kirim_email_alert === 'Ya') {
       if (Number(item.stok_sekarang) <= Number(item.stok_minimum)) {
         checkAndSendEmailAlert(item);
@@ -44,68 +49,24 @@ function scheduledStockCheck() {
   return `Check complete. Sent ${alertsCount} critical alerts.`;
 }
 
-/**
- * Fungsi pembantu kirim email
- */
 function checkAndSendEmailAlert(item) {
   if (!item || !item.kode_barang) return;
-  
-  // LOGIKA: Kirim email jika Monitor='Ya' DAN Kirim Email='Ya' DAN Stok <= Minimum
-  // Kita buat lebih fleksibel, tidak harus 'Kritis' jika user memang mencentang 'Kirim Email'
   const isEligible = (item.monitor_stok === 'Ya' && item.kirim_email_alert === 'Ya');
-                     
   if (isEligible && Number(item.stok_sekarang) <= Number(item.stok_minimum)) {
     const subject = `[PERINGATAN STOK] ${item.nama_barang} (${item.stok_sekarang} ${item.satuan})`;
-    const priorityLabel = item.prioritas_alert || 'Normal';
-    
-    const body = `
-      Peringatan Stok Inventory
-      -------------------------
-      Status: ${priorityLabel.toUpperCase()}
-      Nama Barang: ${item.nama_barang}
-      Kode Barang: ${item.kode_barang}
-      
-      Stok Sekarang: ${item.stok_sekarang} ${item.satuan}
-      Stok Minimum: ${item.stok_minimum} ${item.satuan}
-      Lokasi: ${item.lokasi_rak || '-'}
-      
-      Waktu Kejadian: ${new Date().toLocaleString('id-ID')}
-      
-      Mohon segera dilakukan pengecekan.
-      
-      ---
-      Sistem Inventory RSUD Deli Serdang
-    `;
-    
+    const body = `Peringatan Stok Inventory\nStatus: ${item.prioritas_alert}\nNama: ${item.nama_barang}\nStok: ${item.stok_sekarang}\nMin: ${item.stok_minimum}`;
     try {
       MailApp.sendEmail(ADMIN_EMAIL, subject, body);
-      console.log(`Email alert sent for ${item.kode_barang} to ${ADMIN_EMAIL}`);
-    } catch (e) {
-      console.error(`Failed to send email alert: ${e.message}`);
-    }
+    } catch (e) { console.error(e.message); }
   }
-}
-
-function getSpreadsheet() {
-  try {
-    if (SPREADSHEET_ID && SPREADSHEET_ID !== 'MAKSUD_ANDA_ID_DISINI') {
-      return SpreadsheetApp.openById(SPREADSHEET_ID);
-    }
-  } catch (e) {}
-  
-  try {
-    return SpreadsheetApp.getActiveSpreadsheet();
-  } catch (e) {}
-  
-  throw new Error("ID Spreadsheet tidak ditemukan atau tidak dapat diakses. Pastikan ID di Code.gs benar.");
 }
 
 function doGet(e) {
   const action = e.parameter.action;
-  let sheet;
+  let ss;
   
   try {
-    sheet = getSpreadsheet();
+    ss = getSpreadsheet();
   } catch (err) {
     return jsonResponse({ error: err.message });
   }
@@ -116,16 +77,19 @@ function doGet(e) {
         return jsonResponse({ status: 'ok' });
       case 'getMasters':
         return jsonResponse({
-          barang: getSheetData(sheet, 'MASTER_BARANG'),
-          supplier: getSheetData(sheet, 'SUPPLIER'),
-          satuan: getSheetData(sheet, 'SATUAN'),
-          unit: getSheetData(sheet, 'UNIT_RUANGAN')
+          barang: getSheetData(ss, 'MASTER_BARANG'),
+          supplier: getSheetData(ss, 'SUPPLIER'),
+          satuan: getSheetData(ss, 'SATUAN'),
+          unit: getSheetData(ss, 'UNIT_RUANGAN')
         });
+      case 'login':
+        // Fallback login for GET (not recommended, but for testing)
+        return jsonResponse(handleLogin(e.parameter.email, e.parameter.password));
       case 'getDashboard':
-        const barang = getSheetData(sheet, 'MASTER_BARANG');
-        const mutasi = getSheetData(sheet, 'TRX_MUTASI_STOK');
-        const headerMasuk = getSheetData(sheet, 'TRX_BARANG_MASUK_H');
-        const headerKeluar = getSheetData(sheet, 'TRX_BARANG_KELUAR_H');
+        const barang = getSheetData(ss, 'MASTER_BARANG');
+        const mutasi = getSheetData(ss, 'TRX_MUTASI_STOK');
+        const headerMasuk = getSheetData(ss, 'TRX_BARANG_MASUK_H');
+        const headerKeluar = getSheetData(ss, 'TRX_BARANG_KELUAR_H');
         return jsonResponse({ barang, mutasi, headerMasuk, headerKeluar });
       case 'getMutasi':
         return jsonResponse(getSheetData(sheet, 'TRX_MUTASI_STOK'));
@@ -188,10 +152,10 @@ function doPost(e) {
   }
 
   const action = data.action;
-  let sheet;
+  let ss;
   
   try {
-    sheet = getSpreadsheet();
+    ss = getSpreadsheet();
   } catch (err) {
     return jsonResponse({ error: err.message });
   }
@@ -199,55 +163,57 @@ function doPost(e) {
   try {
     switch (action) {
       case 'saveBarangMasuk':
-        return jsonResponse(handleSaveBarangMasuk(sheet, data.payload));
+        return jsonResponse(handleSaveBarangMasuk(ss, data.payload));
+      case 'login':
+        return jsonResponse(handleLogin(data.payload.email, data.payload.password));
       case 'uploadFile':
         return jsonResponse(handleUploadFile(data.payload));
       case 'saveBarangKeluar':
-        return jsonResponse(handleSaveBarangKeluar(sheet, data.payload));
+        return jsonResponse(handleSaveBarangKeluar(ss, data.payload));
       case 'updateBarangKeluar':
-        return jsonResponse(handleUpdateBarangKeluar(sheet, data.payload));
+        return jsonResponse(handleUpdateBarangKeluar(ss, data.payload));
       case 'deleteBarangKeluar':
-        return jsonResponse(handleDeleteBarangKeluar(sheet, data.payload));
+        return jsonResponse(handleDeleteBarangKeluar(ss, data.payload));
       case 'updateBarangMasuk':
-        return jsonResponse(handleUpdateBarangMasuk(sheet, data.payload));
+        return jsonResponse(handleUpdateBarangMasuk(ss, data.payload));
       case 'saveBarang':
-        return jsonResponse(handleSaveBarang(sheet, data.payload));
+        return jsonResponse(handleSaveBarang(ss, data.payload));
       case 'savePermintaan':
-        return jsonResponse(handleSavePermintaan(sheet, data.payload));
+        return jsonResponse(handleSavePermintaan(ss, data.payload));
       case 'saveReviewPermintaan':
-        return jsonResponse(handleSaveReviewPermintaan(sheet, data.payload));
+        return jsonResponse(handleSaveReviewPermintaan(ss, data.payload));
       case 'approvePermintaan':
-        return jsonResponse(handleApprovePermintaan(sheet, data.payload));
+        return jsonResponse(handleApprovePermintaan(ss, data.payload));
       case 'rejectPermintaan':
-        return jsonResponse(handleRejectPermintaan(sheet, data.payload));
+        return jsonResponse(handleRejectPermintaan(ss, data.payload));
       case 'revisionPermintaan':
-        return jsonResponse(handleRevisionPermintaan(sheet, data.payload));
+        return jsonResponse(handleRevisionPermintaan(ss, data.payload));
       case 'updateBarang':
-        return jsonResponse(handleUpdateBarang(sheet, data.payload));
+        return jsonResponse(handleUpdateBarang(ss, data.payload));
       case 'deleteBarang':
-        return jsonResponse(handleDeleteBarang(sheet, data.payload));
+        return jsonResponse(handleDeleteBarang(ss, data.payload));
       case 'saveSupplier':
-        return jsonResponse(handleSaveSupplier(sheet, data.payload));
+        return jsonResponse(handleSaveSupplier(ss, data.payload));
       case 'updateSupplier':
-        return jsonResponse(handleUpdateSupplier(sheet, data.payload));
+        return jsonResponse(handleUpdateSupplier(ss, data.payload));
       case 'saveSatuan':
-        return jsonResponse(handleSaveSatuan(sheet, data.payload));
+        return jsonResponse(handleSaveSatuan(ss, data.payload));
       case 'updateSatuan':
-        return jsonResponse(handleUpdateSatuan(sheet, data.payload));
+        return jsonResponse(handleUpdateSatuan(ss, data.payload));
       case 'deleteSupplier':
-        return jsonResponse(handleDeleteSupplier(sheet, data.payload));
+        return jsonResponse(handleDeleteSupplier(ss, data.payload));
       case 'deleteSatuan':
-        return jsonResponse(handleDeleteSatuan(sheet, data.payload));
+        return jsonResponse(handleDeleteSatuan(ss, data.payload));
       case 'saveUnit':
-        return jsonResponse(handleSaveUnit(sheet, data.payload));
+        return jsonResponse(handleSaveUnit(ss, data.payload));
       case 'updateUnit':
-        return jsonResponse(handleUpdateUnit(sheet, data.payload));
+        return jsonResponse(handleUpdateUnit(ss, data.payload));
       case 'deleteUnit':
-        return jsonResponse(handleDeleteUnit(sheet, data.payload));
+        return jsonResponse(handleDeleteUnit(ss, data.payload));
       case 'saveSaldoAwal':
-        return jsonResponse(handleSaveSaldoAwal(sheet, data.payload));
+        return jsonResponse(handleSaveSaldoAwal(ss, data.payload));
       case 'seedData':
-        return jsonResponse(handleSeedData(sheet));
+        return jsonResponse(handleSeedData(ss));
       default:
         return jsonResponse({ error: 'Action not found in doPost: ' + (action || 'none') });
     }
@@ -1044,6 +1010,56 @@ function processItems(payload, masterSheet, detailSheet, mutasiSheet, timestamp,
       payload.id_transaksi
     ]);
   });
+}
+
+function handleLogin(email, password) {
+  try {
+    const ss = getSpreadsheet(AUTH_SPREADSHEET_ID);
+    const sheet = ss.getSheetByName('users');
+    if (!sheet) return { success: false, error: 'Sheet users tidak ditemukan' };
+    
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    
+    // Find column indexes
+    let emailIdx = -1, passIdx = -1, nameIdx = -1, roleIdx = -1, statusIdx = -1;
+    headers.forEach((h, i) => {
+      const lower = h.toLowerCase();
+      if (lower === 'email') emailIdx = i;
+      if (lower === 'password') passIdx = i;
+      if (lower === 'name') nameIdx = i;
+      if (lower === 'role') roleIdx = i;
+      if (lower === 'status') statusIdx = i;
+    });
+    
+    if (emailIdx === -1 || passIdx === -1) {
+       return { success: false, error: 'Kolom email atau password tidak ditemukan di sheet users' };
+    }
+    
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][emailIdx]).trim() === String(email).trim() && 
+          String(data[i][passIdx]).trim() === String(password).trim()) {
+        
+        const statusStr = String(data[i][statusIdx] || '').toLowerCase();
+        if (statusStr !== 'aktif' && statusStr !== 'true' && statusStr !== '1') {
+          return { success: false, error: 'Akun Anda sedang tidak aktif' };
+        }
+        
+        return {
+          success: true,
+          user: {
+            email: data[i][emailIdx],
+            name: data[i][nameIdx] || 'User',
+            role: String(data[i][roleIdx] || 'UNIT').toUpperCase().replace('STAFF', 'UNIT'),
+            token: Utilities.base64Encode(data[i][emailIdx] + ':' + Date.now())
+          }
+        };
+      }
+    }
+    return { success: false, error: 'Email atau password salah' };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
 }
 
 function getSheetData(ss, sheetName) {
