@@ -1,20 +1,15 @@
 import React from "react"
-import { Check, ChevronsUpDown, Search, Loader2 } from 'lucide-react';
+import { Check, ChevronsUpDown, Search, Loader2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Badge } from "@/components/ui/badge";
 
 interface Option {
   value: string;
@@ -55,99 +50,124 @@ export function SearchSelect({
   );
 
   const filteredOptions = React.useMemo(() => {
-    if (!searchValue) return options.slice(0, 50);
+    if (!searchValue) return options.slice(0, 100);
     
     const search = searchValue.toLowerCase();
     return options.filter((opt) => 
       opt.label.toLowerCase().includes(search) || 
       (opt.subLabel || '').toLowerCase().includes(search) ||
       opt.value.toLowerCase().includes(search)
-    ).slice(0, 50);
+    ).slice(0, 100);
   }, [options, searchValue]);
 
+  const handleSelect = (opt: Option) => {
+    onSelect(opt.value, opt.original);
+    setOpen(false);
+    setSearchValue("");
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        disabled={disabled}
-        className={cn(
-          buttonVariants({ variant: "outline" }),
-          "w-full justify-between h-10 border-slate-200 hover:bg-slate-50 transition-all font-normal",
-          !selectedValue && "text-slate-500",
-          className
-        )}
-      >
-        {isLoading ? (
-           <div className="flex items-center gap-2 text-slate-400">
-             <Loader2 size={14} className="animate-spin" />
-             <span className="text-xs">Memuat data...</span>
-           </div>
-        ) : selectedOption ? (
-          <div className="flex flex-col items-start truncate leading-tight">
-             <span className="text-sm font-bold text-slate-900 truncate">
-              {selectedOption.label}
-            </span>
-            {selectedOption.subLabel && (
-              <span className="text-[10px] text-slate-400 font-medium truncate uppercase tracking-tighter">
-                {selectedOption.subLabel}
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button
+          disabled={disabled || isLoading}
+          className={cn(
+            "w-full flex items-center justify-between h-12 px-4 bg-slate-50 border border-slate-200 rounded-2xl hover:border-sky-300 transition-all font-normal text-left",
+            !selectedValue && "text-slate-500",
+            className
+          )}
+        >
+          {isLoading ? (
+             <div className="flex items-center gap-2 text-slate-400">
+               <Loader2 size={14} className="animate-spin" />
+               <span className="text-xs">Memuat data...</span>
+             </div>
+          ) : selectedOption ? (
+            <div className="flex flex-col items-start truncate leading-tight">
+               <span className="text-sm font-bold text-slate-900 truncate">
+                {selectedOption.label}
               </span>
+              {selectedOption.subLabel && (
+                <span className="text-[10px] text-slate-400 font-medium truncate uppercase tracking-tighter">
+                  {selectedOption.subLabel}
+                </span>
+              )}
+            </div>
+          ) : (
+            <span className="text-sm font-medium">{placeholder}</span>
+          )}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 text-slate-400" />
+        </button>
+      </DialogTrigger>
+      
+      <DialogContent className="p-0 sm:max-w-[500px] gap-0 overflow-hidden bg-white border-none shadow-2xl rounded-t-[32px] sm:rounded-[32px] max-h-[85vh] flex flex-col">
+        <DialogHeader className="p-6 pb-2 border-b">
+          <DialogTitle className="text-lg font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
+            <Search className="text-sky-600" size={20} />
+            {placeholder}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="p-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input 
+                className="w-full h-12 pl-11 pr-11 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-sky-500/20 font-medium placeholder:text-slate-400"
+                placeholder={searchPlaceholder}
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                autoFocus
+              />
+              {searchValue && (
+                <button 
+                  onClick={() => setSearchValue("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-slate-200 text-slate-500 rounded-full hover:bg-slate-300 transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-2 pb-4">
+            {filteredOptions.length === 0 ? (
+              <div className="p-12 text-center text-slate-500">
+                <p className="text-sm font-medium">{emptyMessage}</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-1">
+                {filteredOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => handleSelect(opt)}
+                    className={cn(
+                      "flex items-center gap-3 p-4 text-left rounded-2xl transition-all border border-transparent",
+                      selectedValue === opt.value ? "bg-sky-50 border-sky-100" : "hover:bg-slate-50"
+                    )}
+                  >
+                    <div className="flex-1 flex flex-col leading-tight">
+                      <span className="font-bold text-sm text-slate-900">
+                        {opt.label}
+                      </span>
+                      {opt.subLabel && (
+                        <span className="text-[10px] text-slate-500 uppercase tracking-tighter font-medium mt-0.5">
+                          {opt.subLabel}
+                        </span>
+                      )}
+                    </div>
+                    {selectedValue === opt.value && (
+                      <div className="w-6 h-6 rounded-full bg-sky-600 flex items-center justify-center text-white shrink-0">
+                        <Check size={14} strokeWidth={3} />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
-        ) : (
-          <span className="text-sm">{placeholder}</span>
-        )}
-        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-      </PopoverTrigger>
-      <PopoverContent className="p-0 w-full min-w-[var(--radix-popover-trigger-width)] shadow-xl border-slate-200" align="start">
-        <Command shouldFilter={false}>
-          <CommandInput 
-            placeholder={searchPlaceholder} 
-            value={searchValue}
-            onValueChange={setSearchValue}
-            className="h-10 text-sm"
-          />
-          <CommandList className="max-h-[300px]">
-            <CommandEmpty className="py-6 text-center text-slate-500">
-              <div className="flex flex-col items-center gap-2">
-                <Search size={20} className="text-slate-200" />
-                <p className="text-xs">{emptyMessage}</p>
-              </div>
-            </CommandEmpty>
-            <CommandGroup>
-              {filteredOptions.map((opt) => (
-                <CommandItem
-                  key={opt.value}
-                  value={opt.value}
-                  onSelect={() => {
-                    onSelect(opt.value, opt.original);
-                    setOpen(false);
-                    setSearchValue("");
-                  }}
-                  className="flex items-center gap-3 py-3 px-4 cursor-pointer data-[selected=true]:bg-sky-50"
-                >
-                  <div className="flex flex-col flex-1 leading-tight">
-                    <span className="font-bold text-[13px] text-slate-900">
-                      {opt.label}
-                    </span>
-                    {opt.subLabel && (
-                      <span className="text-[10px] text-slate-500 uppercase tracking-tight">
-                        {opt.subLabel}
-                      </span>
-                    )}
-                  </div>
-                  {selectedValue === opt.value && (
-                    <Check className="h-4 w-4 text-sky-600 shrink-0" />
-                  )}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-            {options.length > 50 && !searchValue && (
-              <div className="px-4 py-2 border-t bg-slate-50/50 text-center">
-                <p className="text-[10px] text-slate-400 italic">Ketik untuk mencari lebih lanjut...</p>
-              </div>
-            )}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

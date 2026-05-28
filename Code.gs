@@ -62,20 +62,20 @@ function checkAndSendEmailAlert(item) {
 }
 
 function doGet(e) {
-  const action = e.parameter.action;
+  const action = String(e.parameter.action || '').trim();
   let ss;
   
   try {
     ss = getSpreadsheet();
   } catch (err) {
-    return jsonResponse({ error: err.message });
+    return jsonResponse({ error: "Spreadsheet connection error: " + err.message });
   }
   
   try {
-    switch (action) {
+    switch (action.toLowerCase()) {
       case 'ping':
         return jsonResponse({ status: 'ok' });
-      case 'getMasters':
+      case 'getmasters':
         return jsonResponse({
           barang: getSheetData(ss, 'MASTER_BARANG'),
           supplier: getSheetData(ss, 'SUPPLIER'),
@@ -83,57 +83,56 @@ function doGet(e) {
           unit: getSheetData(ss, 'UNIT_RUANGAN')
         });
       case 'login':
-        // Fallback login for GET (not recommended, but for testing)
         return jsonResponse(handleLogin(e.parameter.email, e.parameter.password));
-      case 'getDashboard':
+      case 'getdashboard':
         const barang = getSheetData(ss, 'MASTER_BARANG');
         const mutasi = getSheetData(ss, 'TRX_MUTASI_STOK');
         const headerMasuk = getSheetData(ss, 'TRX_BARANG_MASUK_H');
         const headerKeluar = getSheetData(ss, 'TRX_BARANG_KELUAR_H');
         return jsonResponse({ barang, mutasi, headerMasuk, headerKeluar });
-      case 'getMutasi':
-        return jsonResponse(getSheetData(sheet, 'TRX_MUTASI_STOK'));
-      case 'getRecentTrx':
-      case 'getRecentTrxMasuk':
-        return jsonResponse(getSheetData(sheet, 'TRX_BARANG_MASUK_H'));
-      case 'getRecentTrxKeluar':
-        return jsonResponse(getSheetData(sheet, 'TRX_BARANG_KELUAR_H'));
-      case 'getTrxMasukDetail':
-      case 'getTrxDetail':
+      case 'getmutasi':
+        return jsonResponse(getSheetData(ss, 'TRX_MUTASI_STOK'));
+      case 'getrecenttrx':
+      case 'getrecenttrxmasuk':
+        return jsonResponse(getSheetData(ss, 'TRX_BARANG_MASUK_H'));
+      case 'getrecenttrxkeluar':
+        return jsonResponse(getSheetData(ss, 'TRX_BARANG_KELUAR_H'));
+      case 'gettrxmasukdetail':
+      case 'gettrxdetail':
         const trxIdMasuk = e.parameter.id_transaksi;
-        const allDetailsMasuk = getSheetData(sheet, 'TRX_BARANG_MASUK_D');
-        return jsonResponse(allDetailsMasuk.filter(d => d.id_transaksi === trxIdMasuk));
-      case 'getTrxKeluarDetail':
+        const allDetailsMasuk = getSheetData(ss, 'TRX_BARANG_MASUK_D');
+        return jsonResponse(allDetailsMasuk.filter(d => String(d.id_transaksi) === String(trxIdMasuk)));
+      case 'gettrxkeluardetail':
         const trxIdKeluar = e.parameter.id_transaksi;
-        const allDetailsKeluar = getSheetData(sheet, 'TRX_BARANG_KELUAR_D');
-        return jsonResponse(allDetailsKeluar.filter(d => d.id_transaksi === trxIdKeluar));
-      case 'getPermintaanPending':
-        const allPermintaan = getSheetData(sheet, 'TRX_PERMINTAAN_H');
+        const allDetailsKeluar = getSheetData(ss, 'TRX_BARANG_KELUAR_D');
+        return jsonResponse(allDetailsKeluar.filter(d => String(d.id_transaksi) === String(trxIdKeluar)));
+      case 'getpermintaanpending':
+        const allPermintaan = getSheetData(ss, 'TRX_PERMINTAAN_H');
         return jsonResponse(allPermintaan.filter(p => p.status === 'PENDING'));
-      case 'getPermintaanDetail':
+      case 'getpermintaandetail':
         const reqId = e.parameter.id_permintaan;
-        const allReqDetails = getSheetData(sheet, 'TRX_PERMINTAAN_D');
-        return jsonResponse(allReqDetails.filter(d => d.id_permintaan === reqId));
-      case 'getPermintaanAll':
-        return jsonResponse(getSheetData(sheet, 'TRX_PERMINTAAN_H'));
-      case 'getAllTrxDetails':
-        return jsonResponse(getSheetData(sheet, 'TRX_BARANG_MASUK_D'));
-      case 'getReportsData':
+        const allReqDetails = getSheetData(ss, 'TRX_PERMINTAAN_D');
+        return jsonResponse(allReqDetails.filter(d => String(d.id_permintaan) === String(reqId)));
+      case 'getpermintaanall':
+        return jsonResponse(getSheetData(ss, 'TRX_PERMINTAAN_H'));
+      case 'getalltrxdetails':
+        return jsonResponse(getSheetData(ss, 'TRX_BARANG_MASUK_D'));
+      case 'getreportsdata':
         return jsonResponse({
-          barang: getSheetData(sheet, 'MASTER_BARANG'),
-          mutasi: getSheetData(sheet, 'TRX_MUTASI_STOK'),
-          headerMasuk: getSheetData(sheet, 'TRX_BARANG_MASUK_H'),
-          detailMasuk: getSheetData(sheet, 'TRX_BARANG_MASUK_D'),
-          headerKeluar: getSheetData(sheet, 'TRX_BARANG_KELUAR_H'),
-          detailKeluar: getSheetData(sheet, 'TRX_BARANG_KELUAR_D'),
-          supplier: getSheetData(sheet, 'SUPPLIER'),
-          unit: getSheetData(sheet, 'UNIT_RUANGAN')
+          barang: getSheetData(ss, 'MASTER_BARANG'),
+          mutasi: getSheetData(ss, 'TRX_MUTASI_STOK'),
+          headerMasuk: getSheetData(ss, 'TRX_BARANG_MASUK_H'),
+          detailMasuk: getSheetData(ss, 'TRX_BARANG_MASUK_D'),
+          headerKeluar: getSheetData(ss, 'TRX_BARANG_KELUAR_H'),
+          detailKeluar: getSheetData(ss, 'TRX_BARANG_KELUAR_D'),
+          supplier: getSheetData(ss, 'SUPPLIER'),
+          unit: getSheetData(ss, 'UNIT_RUANGAN')
         });
       default:
-        return jsonResponse({ error: 'Action not found in doGet: ' + (action || 'none') });
+        return jsonResponse({ error: 'Action not found in doGet: ' + action });
     }
   } catch (err) {
-    return jsonResponse({ error: err.message });
+    return jsonResponse({ error: "doGet error: " + err.message });
   }
 }
 
@@ -151,74 +150,74 @@ function doPost(e) {
     return jsonResponse({ error: "Invalid JSON payload" });
   }
 
-  const action = data.action;
+  const action = String(data.action || '').trim();
   let ss;
   
   try {
     ss = getSpreadsheet();
   } catch (err) {
-    return jsonResponse({ error: err.message });
+    return jsonResponse({ error: "Spreadsheet connection error: " + err.message });
   }
   
   try {
-    switch (action) {
-      case 'saveBarangMasuk':
+    switch (action.toLowerCase()) {
+      case 'savebarangmasuk':
         return jsonResponse(handleSaveBarangMasuk(ss, data.payload));
       case 'login':
         return jsonResponse(handleLogin(data.payload.email, data.payload.password));
-      case 'uploadFile':
+      case 'uploadfile':
         return jsonResponse(handleUploadFile(data.payload));
-      case 'saveBarangKeluar':
+      case 'savebarangkeluar':
         return jsonResponse(handleSaveBarangKeluar(ss, data.payload));
-      case 'updateBarangKeluar':
+      case 'updatebarangkeluar':
         return jsonResponse(handleUpdateBarangKeluar(ss, data.payload));
-      case 'deleteBarangKeluar':
+      case 'deletebarangkeluar':
         return jsonResponse(handleDeleteBarangKeluar(ss, data.payload));
-      case 'updateBarangMasuk':
+      case 'updatebarangmasuk':
         return jsonResponse(handleUpdateBarangMasuk(ss, data.payload));
-      case 'saveBarang':
+      case 'savebarang':
         return jsonResponse(handleSaveBarang(ss, data.payload));
-      case 'savePermintaan':
+      case 'savepermintaan':
         return jsonResponse(handleSavePermintaan(ss, data.payload));
-      case 'saveReviewPermintaan':
+      case 'savereviewpermintaan':
         return jsonResponse(handleSaveReviewPermintaan(ss, data.payload));
-      case 'approvePermintaan':
+      case 'approvepermintaan':
         return jsonResponse(handleApprovePermintaan(ss, data.payload));
-      case 'rejectPermintaan':
+      case 'rejectpermintaan':
         return jsonResponse(handleRejectPermintaan(ss, data.payload));
-      case 'revisionPermintaan':
+      case 'revisionpermintaan':
         return jsonResponse(handleRevisionPermintaan(ss, data.payload));
-      case 'updateBarang':
+      case 'updatebarang':
         return jsonResponse(handleUpdateBarang(ss, data.payload));
-      case 'deleteBarang':
+      case 'deletebarang':
         return jsonResponse(handleDeleteBarang(ss, data.payload));
-      case 'saveSupplier':
+      case 'savesupplier':
         return jsonResponse(handleSaveSupplier(ss, data.payload));
-      case 'updateSupplier':
+      case 'updatesupplier':
         return jsonResponse(handleUpdateSupplier(ss, data.payload));
-      case 'saveSatuan':
+      case 'savesatuan':
         return jsonResponse(handleSaveSatuan(ss, data.payload));
-      case 'updateSatuan':
+      case 'updatesatuan':
         return jsonResponse(handleUpdateSatuan(ss, data.payload));
-      case 'deleteSupplier':
+      case 'deletesupplier':
         return jsonResponse(handleDeleteSupplier(ss, data.payload));
-      case 'deleteSatuan':
+      case 'deletesatuan':
         return jsonResponse(handleDeleteSatuan(ss, data.payload));
-      case 'saveUnit':
+      case 'saveunit':
         return jsonResponse(handleSaveUnit(ss, data.payload));
-      case 'updateUnit':
+      case 'updateunit':
         return jsonResponse(handleUpdateUnit(ss, data.payload));
-      case 'deleteUnit':
+      case 'deleteunit':
         return jsonResponse(handleDeleteUnit(ss, data.payload));
-      case 'saveSaldoAwal':
+      case 'savesaldoawal':
         return jsonResponse(handleSaveSaldoAwal(ss, data.payload));
-      case 'seedData':
+      case 'seeddata':
         return jsonResponse(handleSeedData(ss));
       default:
-        return jsonResponse({ error: 'Action not found in doPost: ' + (action || 'none') });
+        return jsonResponse({ error: 'Action not found in doPost: ' + action });
     }
   } catch (err) {
-    return jsonResponse({ error: err.message });
+    return jsonResponse({ error: "doPost error: " + err.message });
   }
 }
 
@@ -1098,7 +1097,8 @@ function handleSeedData(ss) {
     'TRX_BARANG_KELUAR_D', 
     'TRX_MUTASI_STOK',
     'TRX_PERMINTAAN_H',
-    'TRX_PERMINTAAN_D'
+    'TRX_PERMINTAAN_D',
+    'users'
   ];
   const headers = {
     'SATUAN': ['KODE', 'NAMA_SATUAN', 'ALIAS_INPUT', 'KETERANGAN', 'STATUS'],
@@ -1111,15 +1111,20 @@ function handleSeedData(ss) {
     'TRX_BARANG_KELUAR_D': ['ID_TRANSAKSI', 'KODE_BARANG', 'NAMA_BARANG', 'SATUAN', 'QTY'],
     'TRX_MUTASI_STOK': ['TANGGAL', 'KODE_BARANG', 'NAMA_BARANG', 'JENIS', 'MASUK', 'KELUAR', 'SALDO', 'REFERENSI'],
     'TRX_PERMINTAAN_H': ['ID_PERMINTAAN', 'TANGGAL', 'UNIT_ID', 'UNIT_NAMA', 'KETERANGAN', 'STATUS', 'PEMINTA', 'CREATED_AT'],
-    'TRX_PERMINTAAN_D': ['ID_PERMINTAAN', 'KODE_BARANG', 'NAMA_BARANG', 'SATUAN', 'QTY_DIMINTA', 'QTY_DISETUJUI', 'CATATAN_REVIEW']
+    'TRX_PERMINTAAN_D': ['ID_PERMINTAAN', 'KODE_BARANG', 'NAMA_BARANG', 'SATUAN', 'QTY_DIMINTA', 'QTY_DISETUJUI', 'CATATAN_REVIEW'],
+    'users': ['EMAIL', 'PASSWORD', 'NAME', 'ROLE', 'STATUS']
   };
 
   sheets.forEach(name => {
     let s = ss.getSheetByName(name);
-    if (!s) {
-      s = ss.insertSheet(name);
-      s.appendRow(headers[name]);
-    } else {
+      if (!s) {
+        s = ss.insertSheet(name);
+        s.appendRow(headers[name]);
+        // Default admin for users sheet
+        if (name === 'users') {
+          s.appendRow([ADMIN_EMAIL, 'admin123', 'Administrator', 'ADMIN', 'AKTIF']);
+        }
+      } else {
       // Check headers
       const currentHeaders = s.getRange(1, 1, 1, s.getLastColumn() || 1).getValues()[0];
       const requiredHeaders = headers[name];

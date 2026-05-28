@@ -12,7 +12,7 @@ import { gasService } from '../services/gasService';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader } from '../components/ui/card';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { safeFormat } from '../lib/utils';
 import { SearchSelect } from '@/components/SearchSelect';
 import { DataTable, Column } from '../components/DataTable';
 
@@ -43,7 +43,7 @@ export default function ReportUsage() {
     doc.setTextColor(100);
     doc.text(`RSUD DELI SERDANG - UNIT LOGISTIK`, 14, 30);
     doc.text(`Unit: ${unitFilter === 'ALL' ? 'SEMUA UNIT' : unitFilter}`, 14, 35);
-    doc.text(`Tanggal Cetak: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 40);
+    doc.text(`Tanggal Cetak: ${safeFormat(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 40);
 
     const tableRows = filteredReport.map((item: any) => [
       item.unit_nama,
@@ -61,7 +61,7 @@ export default function ReportUsage() {
       styles: { fontSize: 8 }
     });
 
-    doc.save(`LaporanPemakaian_${format(new Date(), 'yyyyMMdd')}.pdf`);
+    doc.save(`LaporanPemakaian_${safeFormat(new Date(), 'yyyyMMdd')}.pdf`);
     toast.success("Berhasil mengekspor PDF");
   };
 
@@ -175,7 +175,7 @@ export default function ReportUsage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `Laporan_Pemakaian_Unit_${format(new Date(), 'yyyyMMdd')}.csv`);
+    link.setAttribute("download", `Laporan_Pemakaian_Unit_${safeFormat(new Date(), 'yyyyMMdd')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Send, 
   Plus, 
+  Minus,
   Trash2, 
   CheckCircle2, 
   Building2, 
@@ -112,14 +113,22 @@ export default function PublicRequest() {
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4">
-      <div className="w-full mx-auto space-y-8">
+      <div className="w-full max-w-4xl mx-auto space-y-8">
         {/* Header Branding */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex p-3 bg-sky-600 text-white rounded-2xl shadow-xl shadow-sky-200 mb-4">
-            <ClipboardList size={32} />
+        <div className="flex flex-col items-center text-center space-y-4">
+          <motion.div 
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            className="p-4 bg-sky-600 text-white rounded-[24px] shadow-2xl shadow-sky-200"
+          >
+            <ClipboardList size={32} strokeWidth={1.5} />
+          </motion.div>
+          <div className="space-y-1">
+            <h1 className="text-4xl font-heading font-black text-slate-900 tracking-tight lowercase">
+              FORMULIR <span className="text-sky-600">PERMINTAAN BARANG</span>
+            </h1>
+            <p className="text-slate-400 font-medium text-sm">Sistem pengelolaan persediaan & distribusi unit RSUD Amri Tambunan</p>
           </div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Form Permintaan <span className="text-sky-600">Barang</span></h1>
-          <p className="text-slate-500 font-medium">Silakan isi form ini untuk mengajukan kebutuhan barang ke gudang persediaan.</p>
         </div>
 
         <Card className="border-none shadow-2xl shadow-slate-200/50 overflow-hidden rounded-3xl">
@@ -183,55 +192,86 @@ export default function PublicRequest() {
             </section>
 
             {/* Section 2: Items */}
-            <section className="space-y-4">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-sky-50 flex items-center justify-center text-sky-600">
-                    <Package size={16} />
+            <section className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-sky-50 flex items-center justify-center text-sky-600">
+                    <Package size={20} />
                   </div>
-                  <h3 className="text-sm font-black text-slate-900 uppercase">Daftar Barang</h3>
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Daftar Barang</h3>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{items.filter(i => i.kode_barang).length} Item Terpilih</p>
+                  </div>
                 </div>
-                <Button onClick={addItem} variant="outline" size="sm" className="h-8 text-[10px] font-bold uppercase border-sky-100 text-sky-600 hover:bg-sky-50">
-                  <Plus size={14} className="mr-1" /> Tambah Item
+                <Button onClick={addItem} variant="outline" size="sm" className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest border-sky-100 text-sky-600 hover:bg-sky-50">
+                  <Plus size={14} className="mr-2" /> Tambah Baris
                 </Button>
               </div>
 
               <div className="space-y-3">
                 {items.map((item, idx) => (
-                  <div key={idx} className="flex flex-col md:flex-row gap-3 p-4 bg-slate-50/50 rounded-2xl border border-slate-100 relative group transition-all hover:bg-white hover:shadow-md">
-                    <div className="flex-1">
-                      <SearchBarang 
-                        barangList={barangList}
-                        selectedKode={item.kode_barang}
-                        onSelect={(sel) => {
-                          const newItems = [...items];
-                          newItems[idx] = {
-                            ...newItems[idx],
-                            kode_barang: sel.kode_barang,
-                            nama_barang: sel.nama_barang,
-                            satuan: sel.satuan
-                          };
-                          setItems(newItems);
-                        }}
-                      />
+                  <div key={idx} className="flex flex-col p-5 bg-white border border-slate-100 rounded-3xl relative group transition-all hover:shadow-xl hover:shadow-sky-100/50 hover:border-sky-200">
+                    <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+                      <div className="flex-1 w-full">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Cari Barang</label>
+                        <SearchBarang 
+                          barangList={barangList}
+                          selectedKode={item.kode_barang}
+                          onSelect={(sel) => {
+                            const newItems = [...items];
+                            newItems[idx] = {
+                              ...newItems[idx],
+                              kode_barang: sel.kode_barang,
+                              nama_barang: sel.nama_barang,
+                              satuan: sel.satuan
+                            };
+                            setItems(newItems);
+                          }}
+                        />
+                      </div>
+                      
+                      <div className="w-full lg:w-48 flex flex-row items-end gap-3">
+                        <div className="flex-1">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Jumlah ({item.satuan || 'Pilih Barang'})</label>
+                          <div className="flex items-center bg-slate-50 rounded-2xl p-1 border border-slate-100">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              className="h-9 w-9 rounded-xl hover:bg-white hover:text-sky-600 transition-colors shrink-0"
+                              onClick={() => updateItem(idx, 'qty', Math.max(1, Number(item.qty) - 1))}
+                            >
+                              <Minus size={16} />
+                            </Button>
+                            <input 
+                              type="number"
+                              className="w-full bg-transparent text-center font-bold text-slate-900 border-none focus:ring-0 text-sm"
+                              value={item.qty}
+                              onChange={e => updateItem(idx, 'qty', e.target.value)}
+                            />
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              className="h-9 w-9 rounded-xl hover:bg-white hover:text-sky-600 transition-colors shrink-0"
+                              onClick={() => updateItem(idx, 'qty', Number(item.qty) + 1)}
+                            >
+                              <Plus size={16} />
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <Button 
+                          variant="ghost" 
+                          onClick={() => removeItem(idx)}
+                          className={cn(
+                            "h-11 w-11 p-0 rounded-2xl shrink-0 transition-colors",
+                            items.length > 1 ? "text-red-400 hover:text-red-600 hover:bg-red-50" : "text-slate-200 cursor-not-allowed"
+                          )}
+                          disabled={items.length <= 1}
+                        >
+                          <Trash2 size={20} />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="w-full md:w-32">
-                      <Input 
-                        type="number" 
-                        min="1"
-                        value={item.qty}
-                        onChange={e => updateItem(idx, 'qty', e.target.value)}
-                        placeholder="Qty"
-                        className="h-10 bg-white"
-                      />
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      onClick={() => removeItem(idx)}
-                      className="text-red-300 hover:text-red-600 hover:bg-red-50 h-10 w-10 p-0 rounded-xl"
-                    >
-                      <Trash2 size={18} />
-                    </Button>
                   </div>
                 ))}
               </div>

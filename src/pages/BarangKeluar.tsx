@@ -36,7 +36,7 @@ import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
-import { cn } from '../lib/utils';
+import { cn, safeFormat } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { 
   Dialog, 
@@ -173,13 +173,7 @@ export default function BarangKeluar() {
         <div className="flex items-center gap-1">
           <CalendarIcon size={12} className="text-slate-400" />
           <span className="text-[10px] font-bold text-slate-600">
-            {(() => {
-              try {
-                return format(new Date(trx.tanggal), 'dd MMMM yyyy', { locale: id });
-              } catch (e) {
-                return trx.tanggal;
-              }
-            })()}
+            {safeFormat(trx.tanggal, 'dd MMMM yyyy')}
           </span>
         </div>
       )
@@ -660,13 +654,7 @@ export default function BarangKeluar() {
                   <div>
                     <DialogTitle className="text-xl font-bold tracking-tight">Rincian Barang Keluar</DialogTitle>
                     <p className="text-sky-100 text-[10px] mt-1 font-mono tracking-widest">
-                      {selectedTrx.id_transaksi} ({(() => {
-                        try {
-                          return format(new Date(selectedTrx.tanggal), 'dd MMMM yyyy', { locale: id });
-                        } catch (e) {
-                          return selectedTrx.tanggal;
-                        }
-                      })()})
+                      {selectedTrx.id_transaksi} ({safeFormat(selectedTrx.tanggal, 'dd MMMM yyyy')})
                     </p>
                   </div>
                   <Home className="text-white/20" size={48} />

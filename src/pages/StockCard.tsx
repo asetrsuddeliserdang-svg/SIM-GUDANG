@@ -21,7 +21,7 @@ import { useMasterData } from '../context/MasterDataContext';
 import { SearchBarang } from '../components/SearchBarang';
 import { format } from 'date-fns';
 import { Button } from '../components/ui/button';
-import { cn } from '../lib/utils';
+import { cn, safeFormat } from '../lib/utils';
 import { toast } from 'sonner';
 import { DataTable, Column } from '../components/DataTable';
 
@@ -57,7 +57,7 @@ export default function StockCard() {
     doc.text(`Kategori: ${selectedBarang.kategori}`, 14, 50);
     doc.text(`Satuan: ${selectedBarang.satuan}`, 14, 55);
     doc.text(`Stok Sekarang: ${selectedBarang.stok_sekarang}`, 14, 60);
-    doc.text(`Tanggal Cetak: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 65);
+    doc.text(`Tanggal Cetak: ${safeFormat(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 65);
 
     const tableRows = mutations.map(m => {
       let keterangan = '-';
@@ -70,7 +70,7 @@ export default function StockCard() {
       }
 
       return [
-        format(new Date(m.tanggal), 'dd/MM/yy HH:mm'),
+        safeFormat(m.tanggal, 'dd/MM/yy HH:mm'),
         m.jenis,
         keterangan,
         m.masuk || '-',
@@ -88,7 +88,7 @@ export default function StockCard() {
       styles: { fontSize: 8 }
     });
 
-    doc.save(`KartuStok_${selectedBarang.kode_barang}_${format(new Date(), 'yyyyMMdd')}.pdf`);
+    doc.save(`KartuStok_${selectedBarang.kode_barang}_${safeFormat(new Date(), 'yyyyMMdd')}.pdf`);
   };
 
   const handlePrint = () => {
@@ -142,8 +142,8 @@ export default function StockCard() {
       sortable: true,
       cell: (m) => (
         <div className="flex flex-col">
-          <p className="text-xs font-black text-slate-900">{format(new Date(m.tanggal), 'dd/MM/yy')}</p>
-          <p className="text-[10px] font-bold text-slate-400 font-mono italic">{format(new Date(m.tanggal), 'HH:mm')}</p>
+          <p className="text-xs font-black text-slate-900">{safeFormat(m.tanggal, 'dd/MM/yy')}</p>
+          <p className="text-[10px] font-bold text-slate-400 font-mono italic">{safeFormat(m.tanggal, 'HH:mm')}</p>
         </div>
       )
     },

@@ -25,7 +25,7 @@ import {
   SelectValue 
 } from '../components/ui/select';
 import { toast } from 'sonner';
-import { cn } from '../lib/utils';
+import { cn, safeFormat } from '../lib/utils';
 import { format } from 'date-fns';
 import { DataTable, Column, StockIndicator } from '../components/DataTable';
 
@@ -68,7 +68,7 @@ export default function ReportStock() {
     doc.setTextColor(100);
     doc.text(`RSUD DELI SERDANG - UNIT LOGISTIK`, 14, 30);
     doc.text(`Kategori: ${categoryFilter === 'ALL' ? 'SEMUA' : categoryFilter}`, 14, 35);
-    doc.text(`Tanggal Cetak: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 40);
+    doc.text(`Tanggal Cetak: ${safeFormat(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 40);
 
     const tableRows = filteredReport.map(item => [
       item.kode_barang,
@@ -90,7 +90,7 @@ export default function ReportStock() {
       styles: { fontSize: 8 }
     });
 
-    doc.save(`LaporanStok_${format(new Date(), 'yyyyMMdd')}.pdf`);
+    doc.save(`LaporanStok_${safeFormat(new Date(), 'yyyyMMdd')}.pdf`);
     toast.success("Berhasil mengekspor PDF");
   };
 
@@ -247,7 +247,7 @@ export default function ReportStock() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `Laporan_Stok_${format(new Date(), 'yyyyMMdd')}.csv`);
+    link.setAttribute("download", `Laporan_Stok_${safeFormat(new Date(), 'yyyyMMdd')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

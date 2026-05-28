@@ -42,7 +42,7 @@ import {
   DialogTrigger,
 } from "../components/ui/dialog";
 import { Badge } from '../components/ui/badge';
-import { cn } from '../lib/utils';
+import { cn, safeCompareDates } from '../lib/utils';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 import { MasterBarang } from '../types';
@@ -203,7 +203,7 @@ export default function RequestManagement() {
       // Filter for non-pending and sort by date desc
       const history = allList
         .filter((r: any) => r.status !== 'PENDING')
-        .sort((a: any, b: any) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime());
+        .sort((a: any, b: any) => safeCompareDates(a.tanggal, b.tanggal, 'desc'));
       setHistoryRequests(history);
 
       setBarangList(Array.isArray(masterData.barang) ? masterData.barang : []);

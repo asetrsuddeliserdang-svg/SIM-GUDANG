@@ -39,7 +39,7 @@ import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
-import { cn } from '../lib/utils';
+import { cn, safeFormat } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { 
   Dialog, 
@@ -444,13 +444,7 @@ export default function BarangMasuk() {
       sortable: true,
       cell: (trx) => (
         <span className="text-[10px] text-slate-500 font-black font-mono">
-          {(() => {
-            try {
-              return format(new Date(trx.tanggal), 'dd MMMM yyyy', { locale: id });
-            } catch (e) {
-              return trx.tanggal;
-            }
-          })()}
+          {safeFormat(trx.tanggal, 'dd MMMM yyyy')}
         </span>
       )
     },
@@ -907,13 +901,7 @@ export default function BarangMasuk() {
                   <div className="text-right shrink-0">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-sky-200 mb-0.5">Tanggal Penerimaan</p>
                     <p className="text-lg font-bold">
-                      {(() => {
-                        try {
-                          return format(new Date(selectedTrx.tanggal), 'dd MMMM yyyy', { locale: id });
-                        } catch (e) {
-                          return selectedTrx.tanggal;
-                        }
-                      })()}
+                      {safeFormat(selectedTrx.tanggal, 'dd MMMM yyyy')}
                     </p>
                   </div>
                 </div>

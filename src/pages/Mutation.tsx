@@ -4,11 +4,9 @@ import { Badge } from '../components/ui/badge';
 import { Download, FileText, ArrowLeftRight, AlertCircle, Loader2 } from 'lucide-react';
 import { gasService } from '../services/gasService';
 import { MutasiStok } from '../types';
-import { format } from 'date-fns';
-import { id } from 'date-fns/locale';
 import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
-import { cn } from '../lib/utils';
+import { cn, safeFormat, safeCompareDates } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { DataTable, Column } from '../components/DataTable';
 
@@ -33,7 +31,7 @@ export default function Mutation() {
       }
 
       return [
-        format(new Date(m.tanggal), 'yyyy-MM-dd HH:mm:ss'),
+        safeFormat(m.tanggal, 'yyyy-MM-dd HH:mm:ss'),
         m.kode_barang,
         m.nama_barang,
         m.jenis,
@@ -50,7 +48,7 @@ export default function Mutation() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `Mutasi_Gudang_${format(new Date(), 'yyyyMMdd')}.csv`);
+    link.setAttribute("download", `Mutasi_Gudang_${safeFormat(new Date(), 'yyyyMMdd')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -66,7 +64,7 @@ export default function Mutation() {
     doc.setFontSize(10);
     doc.setTextColor(100);
     doc.text(`RSUD DELI SERDANG - UNIT LOGISTIK`, 14, 30);
-    doc.text(`Tanggal Cetak: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 35);
+    doc.text(`Tanggal Cetak: ${safeFormat(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 35);
 
     const tableRows = mutations.map(m => {
       let pihak = '-';
@@ -77,7 +75,7 @@ export default function Mutation() {
       }
 
       return [
-        format(new Date(m.tanggal), 'dd/MM/yy HH:mm'),
+        safeFormat(m.tanggal, 'dd/MM/yy HH:mm'),
         m.nama_barang,
         m.jenis,
         pihak,
@@ -96,7 +94,7 @@ export default function Mutation() {
       styles: { fontSize: 7 }
     });
 
-    doc.save(`AuditMutasi_${format(new Date(), 'yyyyMMdd')}.pdf`);
+    doc.save(`AuditMutasi_${safeFormat(new Date(), 'yyyyMMdd')}.pdf`);
     toast.success("Berhasil mengekspor PDF");
   };
 
@@ -110,22 +108,26 @@ export default function Mutation() {
     try {
       const data = await gasService.getReportsData();
       if (data && Array.isArray(data.mutasi)) {
-        // Sort by date descending
-        const sortedData = data.mutasi.sort((a: any, b: any) => 
-          new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
+        // Sort by date descending using safe helper
+        const sortedData = [...data.mutasi].sort((a: any, b: any) => 
+          safeCompareDates(a.tanggal, b.tanggal, 'desc')
         );
         setMutations(sortedData);
 
-        // Build lookup maps
+        // Build lookup maps with explicit string keys
         const mMap: Record<string, string> = {};
         data.headerMasuk?.forEach((h: any) => {
-          mMap[h.id_transaksi] = h.supplier || h.supplier_nama || '-';
+          if (h.id_transaksi) {
+            mMap[String(h.id_transaksi)] = h.supplier || h.supplier_nama || h.supplier_id || '-';
+          }
         });
         setHeadersMasuk(mMap);
 
         const kMap: Record<string, string> = {};
         data.headerKeluar?.forEach((h: any) => {
-          kMap[h.id_transaksi] = h.unit_nama || h.unit || '-';
+          if (h.id_transaksi) {
+            kMap[String(h.id_transaksi)] = h.unit_nama || h.unit || h.unit_id || '-';
+          }
         });
         setHeadersKeluar(kMap);
 
@@ -151,22 +153,10 @@ export default function Mutation() {
       cell: (item) => (
         <div className="flex flex-col">
           <p className="text-xs font-bold text-slate-900">
-            {(() => {
-              try {
-                return format(new Date(item.tanggal), 'dd MMMM yyyy', { locale: id });
-              } catch (e) {
-                return item.tanggal;
-              }
-            })()}
+            {safeFormat(item.tanggal, 'dd MMMM yyyy')}
           </p>
           <p className="text-[10px] font-medium text-slate-400 font-mono">
-            {(() => {
-              try {
-                return format(new Date(item.tanggal), 'HH:mm:ss');
-              } catch (e) {
-                return '';
-              }
-            })()}
+            {safeFormat(item.tanggal, 'HH:mm:ss')}
           </p>
         </div>
       )
@@ -206,10 +196,12 @@ export default function Mutation() {
         const isMasuk = item.jenis.includes('MASUK');
         const isKeluar = item.jenis.includes('KELUAR');
 
+        const ref = item.referensi ? String(item.referensi) : '';
+
         if (isMasuk) {
-          label = headersMasuk[item.referensi] || '-';
+          label = headersMasuk[ref] || '-';
         } else if (isKeluar) {
-          label = headersKeluar[item.referensi] || '-';
+          label = headersKeluar[ref] || '-';
         } else if (item.jenis === 'SALDO AWAL') {
           label = 'Input Saldo Awal';
         }
@@ -335,6 +327,7 @@ export default function Mutation() {
                   data={mutations}
                   columns={mutationColumns}
                   loading={loading}
+                  pageSize={50}
                   searchPlaceholder="Cari berdasarkan kode, nama barang, atau referensi..."
                   emptyMessage="Tidak ada riwayat mutasi stok ditemukan."
                 />

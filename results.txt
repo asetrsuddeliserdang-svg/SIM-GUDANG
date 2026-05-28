@@ -1,0 +1,59 @@
+9:const AUTH_SPREADSHEET_ID = '120rxSc2m21FYFATObzHtWu2DRhLxC2WjjjdUxXr_voU'; // Spreadsheet Khusus User
+13:function getSpreadsheet(id) {
+17:      return SpreadsheetApp.openById(targetId);
+22:    return SpreadsheetApp.getActiveSpreadsheet();
+25:  throw new Error("ID Spreadsheet tidak ditemukan atau tidak dapat diakses.");
+32:  const ss = getSpreadsheet();
+69:    ss = getSpreadsheet();
+158:    ss = getSpreadsheet();
+229:  const sheet = ss.getSheetByName('MASTER_BARANG');
+230:  sheet.appendRow([
+250:  const sheet = ss.getSheetByName('MASTER_BARANG');
+251:  const values = sheet.getDataRange().getValues();
+254:      sheet.getRange(i + 1, 2, 1, 11).setValues([[
+274:  const sheet = ss.getSheetByName('MASTER_BARANG');
+275:  const values = sheet.getDataRange().getValues();
+278:      sheet.deleteRow(i + 1);
+289:  const sheet = ss.getSheetByName('SUPPLIER');
+290:  sheet.appendRow([payload.id_supplier, payload.nama_supplier, payload.kontak, payload.alamat, payload.status || 'AKTIF']);
+295:  const sheet = ss.getSheetByName('SATUAN');
+296:  sheet.appendRow([payload.kode, payload.nama_satuan, payload.alias_input, payload.keterangan, payload.status || 'AKTIF']);
+301:  const sheet = ss.getSheetByName('SUPPLIER');
+302:  const values = sheet.getDataRange().getValues();
+305:      sheet.getRange(i + 1, 2, 1, 4).setValues([[
+318:  const sheet = ss.getSheetByName('SATUAN');
+319:  const values = sheet.getDataRange().getValues();
+322:      sheet.getRange(i + 1, 2, 1, 4).setValues([[
+335:  const sheet = ss.getSheetByName('SUPPLIER');
+336:  const values = sheet.getDataRange().getValues();
+339:      sheet.deleteRow(i + 1);
+347:  const sheet = ss.getSheetByName('SATUAN');
+348:  const values = sheet.getDataRange().getValues();
+351:      sheet.deleteRow(i + 1);
+362:  const sheet = ss.getSheetByName('UNIT_RUANGAN');
+363:  sheet.appendRow([payload.id_unit, payload.nama_unit, payload.bidang, payload.status || 'AKTIF']);
+368:  const sheet = ss.getSheetByName('UNIT_RUANGAN');
+369:  const values = sheet.getDataRange().getValues();
+372:      sheet.getRange(i + 1, 2, 1, 3).setValues([[
+384:  const sheet = ss.getSheetByName('UNIT_RUANGAN');
+385:  const values = sheet.getDataRange().getValues();
+388:      sheet.deleteRow(i + 1);
+776:    return { error: 'Salah satu sheet transaksi tidak ditemukan. Jalankan Seed Database.' };
+890:  const sheet = ss.getSheetByName('TRX_PERMINTAAN_H');
+891:  const values = sheet.getDataRange().getValues();
+894:      sheet.getRange(i + 1, 6).setValue('REJECTED');
+902:  const sheet = ss.getSheetByName('TRX_PERMINTAAN_H');
+903:  const values = sheet.getDataRange().getValues();
+906:      sheet.getRange(i + 1, 6).setValue('REVISION');
+1017:    const ss = getSpreadsheet(AUTH_SPREADSHEET_ID);
+1018:    const sheet = ss.getSheetByName('users');
+1019:    if (!sheet) return { success: false, error: 'Sheet users tidak ditemukan' };
+1021:    const data = sheet.getDataRange().getValues();
+1036:       return { success: false, error: 'Kolom email atau password tidak ditemukan di sheet users' };
+1065:function getSheetData(ss, sheetName) {
+1066:  const sheet = ss.getSheetByName(sheetName);
+1067:  if (!sheet) return [];
+1068:  const range = sheet.getDataRange();
+1089:  // Logic untuk buat header sheet jika belum ada
+1090:  const sheets = [
+1117:  sheets.forEach(name => {

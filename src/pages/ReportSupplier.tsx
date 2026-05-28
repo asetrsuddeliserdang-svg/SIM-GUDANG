@@ -12,7 +12,7 @@ import { gasService } from '../services/gasService';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader } from '../components/ui/card';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { safeFormat } from '../lib/utils';
 import { DataTable, Column } from '../components/DataTable';
 
 export default function ReportSupplier() {
@@ -136,7 +136,7 @@ export default function ReportSupplier() {
       cell: (item) => (
         <div className="flex items-center justify-center gap-2 px-3 py-1 bg-slate-50 border border-slate-100 rounded-lg">
            <Calendar size={12} className="text-slate-400" />
-           <span className="text-[10px] text-slate-600 font-black font-mono tracking-tight">{item.terakhir_pasok}</span>
+           <span className="text-[10px] text-slate-600 font-black font-mono tracking-tight">{safeFormat(item.terakhir_pasok, 'dd/MM/yyyy')}</span>
         </div>
       )
     }
@@ -157,7 +157,7 @@ export default function ReportSupplier() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `Rekap_Supplier_${format(new Date(), 'yyyyMMdd')}.csv`);
+    link.setAttribute("download", `Rekap_Supplier_${safeFormat(new Date(), 'yyyyMMdd')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -172,7 +172,7 @@ export default function ReportSupplier() {
     doc.setFontSize(10);
     doc.setTextColor(100);
     doc.text(`RSUD DELI SERDANG - UNIT LOGISTIK`, 14, 30);
-    doc.text(`Tanggal Cetak: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 35);
+    doc.text(`Tanggal Cetak: ${safeFormat(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 35);
 
     const tableRows = filteredReport.map((item: any) => [
       item.nama_supplier,
@@ -191,7 +191,7 @@ export default function ReportSupplier() {
       styles: { fontSize: 8 }
     });
 
-    doc.save(`RekapSupplier_${format(new Date(), 'yyyyMMdd')}.pdf`);
+    doc.save(`RekapSupplier_${safeFormat(new Date(), 'yyyyMMdd')}.pdf`);
     toast.success("Berhasil mengekspor PDF");
   };
 
