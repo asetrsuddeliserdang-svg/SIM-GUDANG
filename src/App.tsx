@@ -86,3 +86,15 @@ export default function App() {
     </BrowserRouter>
   );
 }
+
+
+function App() {
+  return (
+    // Tambahkan properti basename di sini agar rute memahami subfolder di GitHub Pages
+    <BrowserRouter basename="/SIM-GUDANG">
+      <Routes>
+        {/* Rute-rute Anda */}
+      </Routes>
+    </BrowserRouter>
+  );
+}
