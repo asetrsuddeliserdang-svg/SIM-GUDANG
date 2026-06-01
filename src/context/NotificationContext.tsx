@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { gasService } from '../services/gasService';
 import { toast } from 'sonner';
 import { Bell, AlertCircle } from 'lucide-react';
@@ -29,12 +29,19 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
+  // Use a ref to access current notifications state from within stable useCallbacks
+  const notificationsRef = useRef<Notification[]>(notifications);
+  useEffect(() => {
+    notificationsRef.current = notifications;
+  }, [notifications]);
+
   const checkNewRequests = useCallback(async () => {
     try {
       const pending: any[] = await gasService.getPermintaanPending();
+      const currentNotifications = notificationsRef.current;
       
       // Filter out requests we already have notifications for
-      const newRequests = pending.filter(p => !notifications.some(n => n.id === p.id_permintaan));
+      const newRequests = pending.filter(p => !currentNotifications.some(n => n.id === p.id_permintaan));
       
       if (newRequests.length > 0) {
         const newNotifications: Notification[] = newRequests.map(p => ({
@@ -80,13 +87,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         }
       }
     } catch (error: any) {
-      if (error.message?.includes('terhubung')) {
-        console.warn('Request list poll failed: Backend unreachable');
+      if (error.message?.includes('terhubung') || error.message?.includes('simultan') || error.message?.includes('Google Sheets')) {
+        console.warn('Request list poll skipped: Backend is concurrent-busy or unreachable.');
       } else {
         console.error('Failed to poll notifications:', error);
       }
     }
-  }, [notifications]);
+  }, []);
 
   const checkStockAlerts = useCallback(async () => {
     try {
@@ -99,10 +106,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         (b.prioritas_alert === 'Penting' || b.prioritas_alert === 'Kritis')
       );
 
+      const currentNotifications = notificationsRef.current;
       // Unique ID for stock notifications to avoid duplicates on every poll
-      // Using kode_barang + last_stock_update (or just current date string for now if update date is same)
       const newAlerts = lowStockItems.filter(item => 
-        !notifications.some(n => n.id === `stock-${item.kode_barang}-${item.stok_sekarang}`)
+        !currentNotifications.some(n => n.id === `stock-${item.kode_barang}-${item.stok_sekarang}`)
       );
 
       if (newAlerts.length > 0) {
@@ -141,25 +148,24 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         });
       }
     } catch (error: any) {
-      // Don't log full error every time if it's a persistent connection issue
-      if (error.message?.includes('terhubung')) {
-        console.warn('Stock alert poll failed: Backend unreachable');
+      if (error.message?.includes('terhubung') || error.message?.includes('simultan') || error.message?.includes('Google Sheets')) {
+        console.warn('Stock alert poll skipped: Backend is concurrent-busy or unreachable.');
       } else {
         console.error('Failed to poll stock alerts:', error);
       }
     }
-  }, [notifications]);
+  }, []);
 
   useEffect(() => {
     // Initial check
     checkNewRequests();
     checkStockAlerts();
     
-    // Poll every 60 seconds
+    // Poll every 180 seconds (3 minutes) to avoid rate limits
     const interval = setInterval(() => {
       checkNewRequests();
       checkStockAlerts();
-    }, 60000);
+    }, 180000);
     return () => clearInterval(interval);
   }, [checkNewRequests, checkStockAlerts]);
 

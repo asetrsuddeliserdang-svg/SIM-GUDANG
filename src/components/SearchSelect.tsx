@@ -68,36 +68,38 @@ export function SearchSelect({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button
-          disabled={disabled || isLoading}
-          className={cn(
-            "w-full flex items-center justify-between h-12 px-4 bg-slate-50 border border-slate-200 rounded-2xl hover:border-sky-300 transition-all font-normal text-left",
-            !selectedValue && "text-slate-500",
-            className
-          )}
-        >
-          {isLoading ? (
-             <div className="flex items-center gap-2 text-slate-400">
-               <Loader2 size={14} className="animate-spin" />
-               <span className="text-xs">Memuat data...</span>
-             </div>
-          ) : selectedOption ? (
-            <div className="flex flex-col items-start truncate leading-tight">
-               <span className="text-sm font-bold text-slate-900 truncate">
-                {selectedOption.label}
+      <DialogTrigger
+        render={
+          <button
+            disabled={disabled || isLoading}
+            className={cn(
+              "w-full flex items-center justify-between h-12 px-4 bg-slate-50 border border-slate-200 rounded-2xl hover:border-sky-300 transition-all font-normal text-left cursor-pointer",
+              !selectedValue && "text-slate-500",
+              className
+            )}
+          />
+        }
+      >
+        {isLoading ? (
+           <div className="flex items-center gap-2 text-slate-400">
+             <Loader2 size={14} className="animate-spin" />
+             <span className="text-xs">Memuat data...</span>
+           </div>
+        ) : selectedOption ? (
+          <div className="flex flex-col items-start truncate leading-tight">
+             <span className="text-sm font-bold text-slate-900 truncate">
+              {selectedOption.label}
+            </span>
+            {selectedOption.subLabel && (
+              <span className="text-[10px] text-slate-400 font-medium truncate uppercase tracking-tighter">
+                {selectedOption.subLabel}
               </span>
-              {selectedOption.subLabel && (
-                <span className="text-[10px] text-slate-400 font-medium truncate uppercase tracking-tighter">
-                  {selectedOption.subLabel}
-                </span>
-              )}
-            </div>
-          ) : (
-            <span className="text-sm font-medium">{placeholder}</span>
-          )}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 text-slate-400" />
-        </button>
+            )}
+          </div>
+        ) : (
+          <span className="text-sm font-medium">{placeholder}</span>
+        )}
+        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 text-slate-400" />
       </DialogTrigger>
       
       <DialogContent className="p-0 sm:max-w-[500px] gap-0 overflow-hidden bg-white border-none shadow-2xl rounded-t-[32px] sm:rounded-[32px] max-h-[85vh] flex flex-col">

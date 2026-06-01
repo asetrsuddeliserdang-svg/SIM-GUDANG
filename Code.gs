@@ -9,6 +9,7 @@ const SPREADSHEET_ID = '1YqTE8BFYOdkgeJt3Gs25W0GaAA0VfgJuW52gCHvl_c8';
 const AUTH_SPREADSHEET_ID = '120rxSc2m21FYFATObzHtWu2DRhLxC2WjjjdUxXr_voU'; // Spreadsheet Khusus User
 const FAKTUR_FOLDER_ID = '1EAnOCWBhA7PegkKcJP2Lf7nJR2ccFal8';
 const ADMIN_EMAIL = 'aset.rsuddeliserdang@gmail.com'; 
+const WEB_APP_URL = 'https://persediaan-rsud.netlify.app/'; // Silakan sesuaikan URL ini jika menggunakan nama repository berbeda atau custom domain
 
 function getSpreadsheet(id) {
   try {
@@ -54,10 +55,32 @@ function checkAndSendEmailAlert(item) {
   const isEligible = (item.monitor_stok === 'Ya' && item.kirim_email_alert === 'Ya');
   if (isEligible && Number(item.stok_sekarang) <= Number(item.stok_minimum)) {
     const subject = `[PERINGATAN STOK] ${item.nama_barang} (${item.stok_sekarang} ${item.satuan})`;
-    const body = `Peringatan Stok Inventory\nStatus: ${item.prioritas_alert}\nNama: ${item.nama_barang}\nStok: ${item.stok_sekarang}\nMin: ${item.stok_minimum}`;
+
+    let body = `Peringatan Stok Inventory\n` +
+               `-----------------------------------\n` +
+               `Status          : ${item.prioritas_alert}\n` +
+               `Nama Barang     : ${item.nama_barang}\n` +
+               `Kode Barang     : ${item.kode_barang}\n` +
+               `Stok Sekarang   : ${item.stok_sekarang} ${item.satuan}\n` +
+               `Stok Minimum    : ${item.stok_minimum} ${item.satuan}\n` +
+               `-----------------------------------\n\n` +
+               `Sistem mendeteksi bahwa stok barang ini telah berada di bawah batas minimum yang ditentukan.\n\n` +
+               `Untuk meninjau laporan terkini, Anda dapat langsung mengeklik tautan di bawah ini:\n`;
+
+    if (WEB_APP_URL) {
+      body += `👉 LAPORAN STOK PERSEDIAAN (Aplikasi Web):\n`;
+      body += `   ${WEB_APP_URL}/reports\n\n`;
+    }
+
+    body += `Harap segera lakukan pengecekan fisik gudang atau lakukan pengajuan pemesanan kembali jika diperlukan.\n\n` +
+            `Salam,\n` +
+            `Sistem Gudang Persediaan RSUD`;
+
     try {
       MailApp.sendEmail(ADMIN_EMAIL, subject, body);
-    } catch (e) { console.error(e.message); }
+    } catch (e) { 
+      console.error("Gagal mengirim email: " + e.message); 
+    }
   }
 }
 

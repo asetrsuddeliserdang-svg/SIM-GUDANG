@@ -43,18 +43,22 @@ export default function MainLayout() {
   const { user, logout, isAdmin, isGudang, isUnit, isDirektur } = useAuth();
   const userName = user?.name || "User";
   const userRole = user?.role || "GUEST";
-  const [isOnline, setIsOnline] = useState(true);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
-    // Check connection periodically
-    const checkConnection = async () => {
-      const ok = await gasService.testConnection();
-      setIsOnline(ok);
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Dynamic initial check
+    setIsOnline(navigator.onLine);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
-    
-    checkConnection();
-    const interval = setInterval(checkConnection, 30000); // Check every 30s
-    return () => clearInterval(interval);
   }, []);
 
   const getBreadcrumb = () => {

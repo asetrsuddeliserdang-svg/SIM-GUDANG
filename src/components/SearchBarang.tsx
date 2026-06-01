@@ -85,41 +85,43 @@ export function SearchBarang({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button
-          className={cn(
-            "w-full flex items-center justify-between h-auto py-3 px-4 text-left bg-white border border-slate-200 rounded-2xl hover:border-sky-300 transition-all shadow-sm group disabled:opacity-50 disabled:cursor-not-allowed",
-            className
-          )}
-          disabled={disabled || isLoading}
-        >
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0 text-slate-400 group-hover:text-sky-500 group-hover:bg-sky-50 transition-colors">
-              <Search size={18} />
-            </div>
-            <div className="flex flex-col gap-0.5 truncate leading-tight">
-              {isLoading ? (
-                <span className="text-sm text-slate-400 font-medium">Memuat data...</span>
-              ) : selectedBarang ? (
-                <>
-                  <span className="font-bold text-slate-900 text-sm truncate">
-                    {selectedBarang.nama_barang}
-                  </span>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
-                    <span className="text-sky-600 px-1 bg-sky-50 rounded uppercase font-bold">{selectedBarang.kode_barang}</span>
-                    <span className="flex items-center gap-1">
-                      <Box size={10} className="text-slate-300" />
-                      Stok: {selectedBarang.stok_sekarang} {selectedBarang.satuan}
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <span className="text-sm font-medium text-slate-500">{placeholder}</span>
-              )}
-            </div>
+      <DialogTrigger
+        render={
+          <button
+            className={cn(
+              "w-full flex items-center justify-between h-auto py-3 px-4 text-left bg-white border border-slate-200 rounded-2xl hover:border-sky-300 transition-all shadow-sm group disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer",
+              className
+            )}
+            disabled={disabled || isLoading}
+          />
+        }
+      >
+        <div className="flex items-center gap-3 overflow-hidden">
+          <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center shrink-0 text-slate-400 group-hover:text-sky-500 group-hover:bg-sky-50 transition-colors">
+            <Search size={18} />
           </div>
-          <ChevronsUpDown size={16} className="text-slate-300" />
-        </button>
+          <div className="flex flex-col gap-0.5 truncate leading-tight">
+            {isLoading ? (
+              <span className="text-sm text-slate-400 font-medium">Memuat data...</span>
+            ) : selectedBarang ? (
+              <>
+                <span className="font-bold text-slate-900 text-sm truncate">
+                  {selectedBarang.nama_barang}
+                </span>
+                <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
+                  <span className="text-sky-600 px-1 bg-sky-50 rounded uppercase font-bold">{selectedBarang.kode_barang}</span>
+                  <span className="flex items-center gap-1">
+                    <Box size={10} className="text-slate-300" />
+                    Stok: {selectedBarang.stok_sekarang} {selectedBarang.satuan}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <span className="text-sm font-medium text-slate-500">{placeholder}</span>
+            )}
+          </div>
+        </div>
+        <ChevronsUpDown size={16} className="text-slate-300" />
       </DialogTrigger>
       
       <DialogContent className="p-0 sm:max-w-[600px] gap-0 overflow-hidden bg-white border-none shadow-2xl rounded-t-[32px] sm:rounded-[32px] max-h-[85vh] sm:max-h-[80vh] flex flex-col">
