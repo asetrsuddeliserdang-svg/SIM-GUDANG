@@ -82,6 +82,14 @@ export default function PublicRequest() {
       return toast.error("Semua item barang dan jumlah harus valid!");
     }
 
+    // Periksa apakah ada barang dengan stok 0
+    for (const item of items) {
+      const match = barangList.find(b => b.kode_barang === item.kode_barang);
+      if (match && Number(match.stok_sekarang) <= 0) {
+        return toast.error(`Barang "${item.nama_barang}" tidak dapat diminta karena stok kosong (0)!`);
+      }
+    }
+
     const toastId = toast.loading("Mengirim permintaan barang...");
     setLoading(true);
 
@@ -127,7 +135,7 @@ export default function PublicRequest() {
             <h1 className="text-4xl font-heading font-black text-slate-900 tracking-tight lowercase">
               FORMULIR <span className="text-sky-600">PERMINTAAN BARANG</span>
             </h1>
-            <p className="text-slate-400 font-medium text-sm">Sistem pengelolaan persediaan & distribusi unit RSUD Amri Tambunan</p>
+            <p className="text-slate-400 font-medium text-sm">Sistem Pengelolaan Persediaan & Distribusi Barang RSUD Drs. H. AMRI TAMBUNAN</p>
           </div>
         </div>
 
@@ -204,76 +212,94 @@ export default function PublicRequest() {
                   </div>
                 </div>
                 <Button onClick={addItem} variant="outline" size="sm" className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest border-sky-100 text-sky-600 hover:bg-sky-50">
-                  <Plus size={14} className="mr-2" /> Tambah Baris
+                  <Plus size={14} className="mr-2" /> Tambah Barang
                 </Button>
               </div>
 
               <div className="space-y-3">
-                {items.map((item, idx) => (
-                  <div key={idx} className="flex flex-col p-5 bg-white border border-slate-100 rounded-3xl relative group transition-all hover:shadow-xl hover:shadow-sky-100/50 hover:border-sky-200">
-                    <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
-                      <div className="flex-1 w-full">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Cari Barang</label>
-                        <SearchBarang 
-                          barangList={barangList}
-                          selectedKode={item.kode_barang}
-                          onSelect={(sel) => {
-                            const newItems = [...items];
-                            newItems[idx] = {
-                              ...newItems[idx],
-                              kode_barang: sel.kode_barang,
-                              nama_barang: sel.nama_barang,
-                              satuan: sel.satuan
-                            };
-                            setItems(newItems);
-                          }}
-                        />
-                      </div>
-                      
-                      <div className="w-full lg:w-48 flex flex-row items-end gap-3">
-                        <div className="flex-1">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Jumlah ({item.satuan || 'Pilih Barang'})</label>
-                          <div className="flex items-center bg-slate-50 rounded-2xl p-1 border border-slate-100">
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              className="h-9 w-9 rounded-xl hover:bg-white hover:text-sky-600 transition-colors shrink-0"
-                              onClick={() => updateItem(idx, 'qty', Math.max(1, Number(item.qty) - 1))}
-                            >
-                              <Minus size={16} />
-                            </Button>
-                            <input 
-                              type="number"
-                              className="w-full bg-transparent text-center font-bold text-slate-900 border-none focus:ring-0 text-sm"
-                              value={item.qty}
-                              onChange={e => updateItem(idx, 'qty', e.target.value)}
-                            />
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              className="h-9 w-9 rounded-xl hover:bg-white hover:text-sky-600 transition-colors shrink-0"
-                              onClick={() => updateItem(idx, 'qty', Number(item.qty) + 1)}
-                            >
-                              <Plus size={16} />
-                            </Button>
+                {items.map((item, idx) => {
+                  const matchedBarang = barangList.find(b => b.kode_barang === item.kode_barang);
+                  const isOutOfStock = matchedBarang && Number(matchedBarang.stok_sekarang) <= 0;
+
+                  return (
+                    <div key={idx} className={cn(
+                      "flex flex-col p-5 bg-white border rounded-3xl relative group transition-all hover:shadow-xl",
+                      isOutOfStock 
+                        ? "border-red-200 hover:shadow-red-50/50 bg-red-50/5" 
+                        : "border-slate-100 hover:shadow-sky-100/50 hover:border-sky-200"
+                    )}>
+                      <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+                        <div className="flex-1 w-full">
+                          <div className="flex items-center justify-between ml-1 mb-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Cari Barang</label>
+                            {isOutOfStock && (
+                              <span className="text-[10px] font-bold text-red-500 uppercase tracking-tight">STOK KOSONG - TIDAK BISA DIMINTA</span>
+                            )}
                           </div>
+                          <SearchBarang 
+                            barangList={barangList}
+                            selectedKode={item.kode_barang}
+                            onSelect={(sel) => {
+                              const newItems = [...items];
+                              newItems[idx] = {
+                                ...newItems[idx],
+                                kode_barang: sel.kode_barang,
+                                nama_barang: sel.nama_barang,
+                                satuan: sel.satuan
+                              };
+                              setItems(newItems);
+                              if (Number(sel.stok_sekarang) <= 0) {
+                                toast.error(`Peringatan: Barang "${sel.nama_barang}" tidak bisa dikirim karena stok kosong (0).`);
+                              }
+                            }}
+                          />
                         </div>
                         
-                        <Button 
-                          variant="ghost" 
-                          onClick={() => removeItem(idx)}
-                          className={cn(
-                            "h-11 w-11 p-0 rounded-2xl shrink-0 transition-colors",
-                            items.length > 1 ? "text-red-400 hover:text-red-600 hover:bg-red-50" : "text-slate-200 cursor-not-allowed"
-                          )}
-                          disabled={items.length <= 1}
-                        >
-                          <Trash2 size={20} />
-                        </Button>
+                        <div className="w-full lg:w-48 flex flex-row items-end gap-3">
+                          <div className="flex-1">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-1.5 block">Jumlah ({item.satuan || 'Pilih Barang'})</label>
+                            <div className="flex items-center bg-slate-50 rounded-2xl p-1 border border-slate-100">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                className="h-9 w-9 rounded-xl hover:bg-white hover:text-sky-600 transition-colors shrink-0"
+                                onClick={() => updateItem(idx, 'qty', Math.max(1, Number(item.qty) - 1))}
+                              >
+                                <Minus size={16} />
+                              </Button>
+                              <input 
+                                type="number"
+                                className="w-full bg-transparent text-center font-bold text-slate-900 border-none focus:ring-0 text-sm"
+                                value={item.qty}
+                                onChange={e => updateItem(idx, 'qty', e.target.value)}
+                              />
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                className="h-9 w-9 rounded-xl hover:bg-white hover:text-sky-600 transition-colors shrink-0"
+                                onClick={() => updateItem(idx, 'qty', Number(item.qty) + 1)}
+                              >
+                                <Plus size={16} />
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          <Button 
+                            variant="ghost" 
+                            onClick={() => removeItem(idx)}
+                            className={cn(
+                              "h-11 w-11 p-0 rounded-2xl shrink-0 transition-colors",
+                              items.length > 1 ? "text-red-400 hover:text-red-600 hover:bg-red-50" : "text-slate-200 cursor-not-allowed"
+                            )}
+                            disabled={items.length <= 1}
+                          >
+                            <Trash2 size={20} />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
 
@@ -291,7 +317,7 @@ export default function PublicRequest() {
         </Card>
 
         <p className="text-center text-[11px] text-slate-400 font-medium">
-          Dukungan Teknis: IT Support RSUD Deli Serdang &copy; 2024
+          Dukungan Teknis: Data Analis RSUD Drs. H. AMRI TAMBUNAN&copy; 2026
         </p>
       </div>
     </div>
