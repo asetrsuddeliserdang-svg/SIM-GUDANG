@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { gasService } from '../services/gasService';
-import { MasterBarang, Supplier, Satuan, Unit } from '../types';
+import { MasterBarang, Supplier, Satuan, Unit, Kategori } from '../types';
 
 interface MasterDataContextType {
   barangList: MasterBarang[];
   supplierList: Supplier[];
   satuanList: Satuan[];
   unitList: Unit[];
+  kategoriList: Kategori[];
   loading: boolean;
   error: string | null;
   refreshData: () => Promise<void>;
@@ -19,6 +20,7 @@ export function MasterDataProvider({ children }: { children: React.ReactNode }) 
   const [supplierList, setSupplierList] = useState<Supplier[]>([]);
   const [satuanList, setSatuanList] = useState<Satuan[]>([]);
   const [unitList, setUnitList] = useState<Unit[]>([]);
+  const [kategoriList, setKategoriList] = useState<Kategori[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastFetched, setLastFetched] = useState<number>(0);
@@ -43,6 +45,7 @@ export function MasterDataProvider({ children }: { children: React.ReactNode }) 
       setSupplierList(data.supplier || []);
       setSatuanList(data.satuan || []);
       setUnitList(data.unit || []);
+      setKategoriList(data.kategori || []);
       setLastFetched(Date.now());
     } catch (err: any) {
       console.error('Failed to fetch master data:', err);
@@ -66,6 +69,7 @@ export function MasterDataProvider({ children }: { children: React.ReactNode }) 
       supplierList,
       satuanList,
       unitList,
+      kategoriList,
       loading,
       error,
       refreshData

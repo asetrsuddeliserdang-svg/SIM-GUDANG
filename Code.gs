@@ -103,7 +103,8 @@ function doGet(e) {
           barang: getSheetData(ss, 'MASTER_BARANG'),
           supplier: getSheetData(ss, 'SUPPLIER'),
           satuan: getSheetData(ss, 'SATUAN'),
-          unit: getSheetData(ss, 'UNIT_RUANGAN')
+          unit: getSheetData(ss, 'UNIT_RUANGAN'),
+          kategori: getSheetData(ss, 'KATEGORI')
         });
       case 'login':
         return jsonResponse(handleLogin(e.parameter.email, e.parameter.password));
@@ -149,7 +150,8 @@ function doGet(e) {
           headerKeluar: getSheetData(ss, 'TRX_BARANG_KELUAR_H'),
           detailKeluar: getSheetData(ss, 'TRX_BARANG_KELUAR_D'),
           supplier: getSheetData(ss, 'SUPPLIER'),
-          unit: getSheetData(ss, 'UNIT_RUANGAN')
+          unit: getSheetData(ss, 'UNIT_RUANGAN'),
+          kategori: getSheetData(ss, 'KATEGORI')
         });
       default:
         return jsonResponse({ error: 'Action not found in doGet: ' + action });
@@ -232,6 +234,12 @@ function doPost(e) {
         return jsonResponse(handleUpdateUnit(ss, data.payload));
       case 'deleteunit':
         return jsonResponse(handleDeleteUnit(ss, data.payload));
+      case 'savekategori':
+        return jsonResponse(handleSaveKategori(ss, data.payload));
+      case 'updatekategori':
+        return jsonResponse(handleUpdateKategori(ss, data.payload));
+      case 'deletekategori':
+        return jsonResponse(handleDeleteKategori(ss, data.payload));
       case 'savesaldoawal':
         return jsonResponse(handleSaveSaldoAwal(ss, data.payload));
       case 'seeddata':
@@ -412,6 +420,43 @@ function handleDeleteUnit(ss, payload) {
     }
   }
   return { error: 'Unit not found' };
+}
+
+/**
+ * CRUD Kategori
+ */
+function handleSaveKategori(ss, payload) {
+  const sheet = ss.getSheetByName('KATEGORI');
+  sheet.appendRow([payload.id_kategori, payload.nama_kategori, payload.keterangan || '', payload.status || 'AKTIF']);
+  return { success: true };
+}
+
+function handleUpdateKategori(ss, payload) {
+  const sheet = ss.getSheetByName('KATEGORI');
+  const values = sheet.getDataRange().getValues();
+  for (let i = 1; i < values.length; i++) {
+    if (values[i][0] == payload.id_kategori) {
+      sheet.getRange(i + 1, 2, 1, 3).setValues([[
+        payload.nama_kategori,
+        payload.keterangan || '',
+        payload.status || 'AKTIF'
+      ]]);
+      return { success: true };
+    }
+  }
+  return { error: 'Kategori not found' };
+}
+
+function handleDeleteKategori(ss, payload) {
+  const sheet = ss.getSheetByName('KATEGORI');
+  const values = sheet.getDataRange().getValues();
+  for (let i = 1; i < values.length; i++) {
+    if (values[i][0] == payload.id_kategori) {
+      sheet.deleteRow(i + 1);
+      return { success: true };
+    }
+  }
+  return { error: 'Kategori not found' };
 }
 
 /**
@@ -1113,6 +1158,7 @@ function handleSeedData(ss) {
     'SATUAN', 
     'SUPPLIER', 
     'UNIT_RUANGAN', 
+    'KATEGORI',
     'MASTER_BARANG', 
     'TRX_BARANG_MASUK_H', 
     'TRX_BARANG_MASUK_D', 
@@ -1127,6 +1173,7 @@ function handleSeedData(ss) {
     'SATUAN': ['KODE', 'NAMA_SATUAN', 'ALIAS_INPUT', 'KETERANGAN', 'STATUS'],
     'SUPPLIER': ['ID_SUPPLIER', 'NAMA_SUPPLIER', 'KONTAK', 'ALAMAT', 'STATUS'],
     'UNIT_RUANGAN': ['ID_UNIT', 'NAMA_UNIT', 'BIDANG', 'STATUS'],
+    'KATEGORI': ['ID_KATEGORI', 'NAMA_KATEGORI', 'KETERANGAN', 'STATUS'],
     'MASTER_BARANG': ['KODE_BARANG', 'NAMA_BARANG', 'KATEGORI', 'SUB_KATEGORI', 'SATUAN', 'STOK_MINIMUM', 'MONITOR_STOK', 'PRIORITAS_ALERT', 'KIRIM_EMAIL_ALERT', 'MERK', 'LOKASI_RAK', 'STATUS', 'STOK_SEKARANG', 'LAST_STOCK_UPDATE'],
     'TRX_BARANG_MASUK_H': ['ID_TRANSAKSI', 'TANGGAL', 'NO_FAKTUR', 'SUPPLIER', 'KETERANGAN', 'FILE_FAKTUR', 'TOTAL', 'USER_INPUT', 'CREATED_AT'],
     'TRX_BARANG_MASUK_D': ['ID_TRANSAKSI', 'KODE_BARANG', 'NAMA_BARANG', 'SATUAN', 'QTY', 'HARGA', 'TOTAL'],
@@ -1146,6 +1193,12 @@ function handleSeedData(ss) {
         // Default admin for users sheet
         if (name === 'users') {
           s.appendRow([ADMIN_EMAIL, 'admin123', 'Administrator', 'ADMIN', 'AKTIF']);
+        }
+        if (name === 'KATEGORI') {
+          s.appendRow(['KAT-001', 'BMHP', 'Barang Medis Habis Pakai', 'AKTIF']);
+          s.appendRow(['KAT-002', 'BHP', 'Barang Habis Pakai', 'AKTIF']);
+          s.appendRow(['KAT-003', 'ATK', 'Alat Tulis Kantor', 'AKTIF']);
+          s.appendRow(['KAT-004', 'ALAT', 'Alat / Aset', 'AKTIF']);
         }
       } else {
       // Check headers

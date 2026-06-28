@@ -70,16 +70,22 @@ class GASService {
         throw new Error('Respon dari Google bukan JSON. Pastikan Web App di-deploy dengan akses "Anyone" (Siapa Saja) dan Anda sudah memberi izin (Authorize) di Google Apps Script.');
       }
 
+      let json: any;
       try {
-        const json = JSON.parse(text);
-        if (json.error) {
-          throw new Error(json.error);
-        }
-        return json;
+        json = JSON.parse(text);
       } catch (parseError) {
         console.error('GAS Raw Response:', text.substring(0, 500));
         throw new Error('Gagal membaca data dari Google Sheets. Pastikan skrip Google Apps Script tidak error.');
       }
+
+      if (json && json.error) {
+        if (typeof json.error === 'string' && json.error.includes('Action not found')) {
+          throw new Error(`${json.error}. \n\nSOLUSI PENTING: Kode Apps Script Anda di server Google belum diperbarui dengan fitur baru ini. Silakan salin seluruh isi file Code.gs dari aplikasi ini, tempel (paste) ke editor script.google.com Anda, lalu lakukan Deploy > Manage deployments > Edit > New version > Deploy.`);
+        }
+        throw new Error(json.error);
+      }
+
+      return json;
     } catch (error: any) {
       const isFailedToFetch = error.message === 'Failed to fetch' || error.name === 'TypeError';
       
@@ -267,6 +273,18 @@ class GASService {
 
   async deleteUnit(id_unit: string) {
     return this.request('POST', { action: 'deleteUnit', payload: { id_unit } });
+  }
+
+  async saveKategori(payload: any) {
+    return this.request('POST', { action: 'saveKategori', payload });
+  }
+
+  async updateKategori(payload: any) {
+    return this.request('POST', { action: 'updateKategori', payload });
+  }
+
+  async deleteKategori(id_kategori: string) {
+    return this.request('POST', { action: 'deleteKategori', payload: { id_kategori } });
   }
 
   async saveSaldoAwal(payload: any) {

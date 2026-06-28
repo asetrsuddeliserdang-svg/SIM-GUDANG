@@ -7,7 +7,7 @@ import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Package, Truck, Ruler, Plus, Search, Layers, Edit, Trash2, X, Save, Settings, RefreshCw, Loader2, Home, AlertCircle, Trash, MoreVertical } from 'lucide-react';
 import { gasService } from '../services/gasService';
-import { MasterBarang, Supplier, Satuan, Unit } from '@/types';
+import { MasterBarang, Supplier, Satuan, Unit, Kategori } from '@/types';
 import { useMasterData } from '../context/MasterDataContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -24,7 +24,7 @@ import {
 } from "../components/ui/dropdown-menu";
 
 export default function MasterData() {
-  const { barangList: barang, supplierList: suppliers, satuanList: satuans, unitList: units, loading: masterLoading, error, refreshData } = useMasterData();
+  const { barangList: barang, supplierList: suppliers, satuanList: satuans, unitList: units, kategoriList: kategoris, loading: masterLoading, error, refreshData } = useMasterData();
   
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -36,11 +36,13 @@ export default function MasterData() {
   const [isSupplierDialogOpen, setIsSupplierDialogOpen] = useState(false);
   const [isSatuanDialogOpen, setIsSatuanDialogOpen] = useState(false);
   const [isUnitDialogOpen, setIsUnitDialogOpen] = useState(false);
+  const [isKategoriDialogOpen, setIsKategoriDialogOpen] = useState(false);
 
   const [editingItem, setEditingItem] = useState<MasterBarang | null>(null);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [editingSatuan, setEditingSatuan] = useState<Satuan | null>(null);
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
+  const [editingKategori, setEditingKategori] = useState<Kategori | null>(null);
   
   const [formData, setFormData] = useState<Partial<MasterBarang>>({
     kode_barang: '',
@@ -78,6 +80,13 @@ export default function MasterData() {
     id_unit: '',
     nama_unit: '',
     bidang: '',
+    status: 'AKTIF'
+  });
+
+  const [kategoriFormData, setKategoriFormData] = useState<Partial<Kategori>>({
+    id_kategori: '',
+    nama_kategori: '',
+    keterangan: '',
     status: 'AKTIF'
   });
 
@@ -147,6 +156,14 @@ export default function MasterData() {
         status: 'AKTIF'
       });
       setIsUnitDialogOpen(true);
+    } else if (activeTab === 'kategori') {
+      setKategoriFormData({
+        id_kategori: generateNextId('KAT-', kategoris || [], 'id_kategori', 3),
+        nama_kategori: '',
+        keterangan: '',
+        status: 'AKTIF'
+      });
+      setIsKategoriDialogOpen(true);
     }
   };
 
@@ -190,6 +207,15 @@ export default function MasterData() {
       bidang: item.bidang || ''
     });
     setIsUnitDialogOpen(true);
+  };
+
+  const handleEditKategori = (item: Kategori) => {
+    setEditingKategori(item);
+    setKategoriFormData({
+      ...item,
+      status: item.status || 'AKTIF'
+    });
+    setIsKategoriDialogOpen(true);
   };
 
   const handleDelete = async (kode: string) => {
@@ -326,6 +352,40 @@ export default function MasterData() {
       fetchData();
     } catch (err: any) {
       toast.error(err.message || "Gagal menghapus unit", { id: toastId });
+    }
+  };
+
+  const handleSaveKategori = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const toastId = toast.loading("Menyimpan data kategori...");
+    try {
+      if (editingKategori) {
+        await gasService.updateKategori(kategoriFormData);
+        toast.success("Kategori berhasil diupdate", { id: toastId });
+      } else {
+        await gasService.saveKategori(kategoriFormData);
+        toast.success("Kategori berhasil ditambah", { id: toastId });
+      }
+      setEditingKategori(null);
+      setIsKategoriDialogOpen(false);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || "Gagal menyimpan kategori", { id: toastId });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteKategori = async (id: string) => {
+    if (!confirm('Hapus kategori ini?')) return;
+    const toastId = toast.loading("Menghapus data...");
+    try {
+      await gasService.deleteKategori(id);
+      toast.success("Kategori berhasil dihapus", { id: toastId });
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || "Gagal menghapus kategori", { id: toastId });
     }
   };
 
@@ -640,6 +700,72 @@ export default function MasterData() {
     }
   ];
 
+  const kategoriColumns: Column<Kategori>[] = [
+    { 
+      header: 'ID', 
+      accessorKey: 'id_kategori', 
+      sticky: 'left',
+      sortable: true,
+      width: '100px',
+      cell: (item) => <span className="font-black text-sky-700 font-mono tracking-tighter">{item.id_kategori}</span>
+    },
+    { 
+      header: 'Nama Kategori', 
+      accessorKey: 'nama_kategori', 
+      sortable: true,
+      cell: (item) => <span className="font-black text-slate-900">{item.nama_kategori}</span>
+    },
+    { 
+      header: 'Keterangan', 
+      accessorKey: 'keterangan', 
+      sortable: true,
+      cell: (item) => <span className="text-xs text-slate-500 font-medium">{item.keterangan || '-'}</span>
+    },
+    { 
+      header: 'Status', 
+      accessorKey: 'status', 
+      sortable: true,
+      cell: (item) => <Badge className={cn(
+        "rounded-md text-[10px] px-2 py-0.5 font-black uppercase tracking-widest",
+        item.status === 'AKTIF' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-700 border border-red-100'
+      )}>{item.status}</Badge>
+    },
+    {
+      header: 'Aksi',
+      sticky: 'right',
+      width: '100px',
+      className: "text-right",
+      cell: (item) => (
+        <div className="flex justify-end">
+          <DropdownMenu>
+            <DropdownMenuTrigger 
+              onClick={(e) => e.stopPropagation()}
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-8 w-8 p-0 text-slate-400 hover:text-sky-600 hover:bg-sky-50 transition-all")}
+            >
+              <MoreVertical size={16} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-32 rounded-xl border-slate-100 p-1 bg-white">
+              <DropdownMenuItem 
+                onClick={(e) => { e.stopPropagation(); handleEditKategori(item); }}
+                className="rounded-lg h-8 text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-sky-50 hover:text-sky-600 cursor-pointer"
+              >
+                <Edit size={14} className="mr-2" />
+                Ubah
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={(e) => { e.stopPropagation(); handleDeleteKategori(item.id_kategori); }}
+                className="rounded-lg h-8 text-[10px] font-black uppercase tracking-widest text-red-600 hover:bg-red-50 cursor-pointer"
+              >
+                <Trash size={14} className="mr-2" />
+                Hapus
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )
+    }
+  ];
+
   const fetchData = async () => {
     setLoading(true);
     await refreshData();
@@ -738,6 +864,10 @@ export default function MasterData() {
               <Home size={16} className="mr-2 md:mr-3 shrink-0" />
               Unit / Ruangan
             </TabsTrigger>
+            <TabsTrigger value="kategori" className="rounded-xl px-4 md:px-8 data-[state=active]:bg-indigo-600 data-[state=active]:text-white transition-all h-11 font-black text-[10px] sm:text-[11px] uppercase tracking-widest">
+              <Layers size={16} className="mr-2 md:mr-3 shrink-0" />
+              Kategori
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -785,6 +915,16 @@ export default function MasterData() {
                 columns={unitColumns} 
                 searchPlaceholder="Cari unit atau bidang..."
                 onRowClick={handleEditUnit}
+                loading={masterLoading || loading}
+              />
+            </TabsContent>
+
+            <TabsContent value="kategori" className="mt-0 outline-none">
+              <DataTable 
+                data={kategoris || []} 
+                columns={kategoriColumns} 
+                searchPlaceholder="Cari kategori..."
+                onRowClick={handleEditKategori}
                 loading={masterLoading || loading}
               />
             </TabsContent>
@@ -858,10 +998,20 @@ export default function MasterData() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="BMHP">BMHP (Barang Medis Habis Pakai)</SelectItem>
-                      <SelectItem value="BHP">BHP (Barang Habis Pakai)</SelectItem>
-                      <SelectItem value="ATK">ATK (Alat Tulis Kantor)</SelectItem>
-                      <SelectItem value="ALAT">ALAT / ASET</SelectItem>
+                      {kategoris && kategoris.length > 0 ? (
+                        kategoris.map(kat => (
+                          <SelectItem key={kat.id_kategori} value={kat.nama_kategori}>
+                            {kat.nama_kategori}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <>
+                          <SelectItem value="BMHP">BMHP (Barang Medis Habis Pakai)</SelectItem>
+                          <SelectItem value="BHP">BHP (Barang Habis Pakai)</SelectItem>
+                          <SelectItem value="ATK">ATK (Alat Tulis Kantor)</SelectItem>
+                          <SelectItem value="ALAT">ALAT / ASET</SelectItem>
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1180,6 +1330,65 @@ export default function MasterData() {
               <Button type="submit" disabled={loading} className="h-10 bg-sky-600 hover:bg-sky-700 px-8 text-xs font-bold uppercase tracking-widest group">
                 <Save size={14} className="mr-2 group-hover:scale-110 transition-transform" />
                 Simpan Unit
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Kategori Dialog */}
+      <Dialog open={isKategoriDialogOpen} onOpenChange={setIsKategoriDialogOpen}>
+        <DialogContent className="max-w-md bg-white p-0 overflow-hidden rounded-2xl border-none shadow-2xl">
+          <form onSubmit={handleSaveKategori}>
+            <div className="bg-indigo-600 p-6 text-white text-center">
+              <DialogHeader>
+                <div className="mx-auto w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-2">
+                  <Layers size={24} />
+                </div>
+                <DialogTitle className="text-xl font-bold">
+                   {editingKategori ? 'Edit Kategori' : 'Tambah Kategori Baru'}
+                </DialogTitle>
+                <DialogDescription className="text-indigo-100 text-xs">
+                  {editingKategori ? 'Perbarui informasi kategori barang.' : 'Daftarkan kategori barang baru.'}
+                </DialogDescription>
+              </DialogHeader>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">ID Kategori</Label>
+                  <Input value={kategoriFormData.id_kategori} readOnly className="bg-slate-50 font-mono text-xs border-slate-200" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Status</Label>
+                  <Select 
+                    value={kategoriFormData.status || "AKTIF"} 
+                    onValueChange={(v) => setKategoriFormData({...kategoriFormData, status: v as 'AKTIF' | 'NON-AKTIF'})}
+                  >
+                    <SelectTrigger className="h-10 text-xs bg-white border-slate-200">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="AKTIF">AKTIF</SelectItem>
+                      <SelectItem value="NON-AKTIF">NON-AKTIF</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Nama Kategori</Label>
+                <Input value={kategoriFormData.nama_kategori} required onChange={(e) => setKategoriFormData({...kategoriFormData, nama_kategori: e.target.value})} className="h-10 text-sm font-medium border-slate-200" placeholder="Mis: Elektronik / BMHP" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">Keterangan</Label>
+                <Input value={kategoriFormData.keterangan || ""} onChange={(e) => setKategoriFormData({...kategoriFormData, keterangan: e.target.value})} className="h-10 text-sm font-medium border-slate-200" placeholder="Keterangan tambahan..." />
+              </div>
+            </div>
+            <DialogFooter className="p-6 bg-slate-50">
+              <Button type="button" variant="ghost" onClick={() => setIsKategoriDialogOpen(false)} className="h-10 text-xs font-bold text-slate-400">BATAL</Button>
+              <Button type="submit" disabled={loading} className="h-10 bg-indigo-600 hover:bg-indigo-700 px-8 text-xs font-bold uppercase tracking-widest group">
+                <Save size={14} className="mr-2 group-hover:scale-110 transition-transform" />
+                Simpan Kategori
               </Button>
             </DialogFooter>
           </form>

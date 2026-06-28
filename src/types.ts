@@ -13,6 +13,14 @@ export interface AppUser {
   status: 'AKTIF' | 'NON-AKTIF';
 }
 
+export interface Kategori {
+  id?: string;
+  id_kategori: string;
+  nama_kategori: string;
+  keterangan: string;
+  status: 'AKTIF' | 'NON-AKTIF';
+}
+
 export interface Satuan {
   id?: string;
   kode: string;
